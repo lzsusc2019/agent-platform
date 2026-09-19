@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Agent Platform · Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --border: #e3e6eb;
+      --text: #1f2330;
+      --muted: #6b7385;
+      --accent: #4f46e5;
+      --accent-2: #10b981;
+      --warn: #f59e0b;
+      --err: #ef4444;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+    header h1 { font-size: 16px; margin: 0; }
+    header .meta { color: var(--muted); font-size: 12px; }
+    nav { display: flex; gap: 4px; padding: 8px 24px; background: var(--panel); border-bottom: 1px solid var(--border); }
+    nav button { background: transparent; border: 1px solid transparent; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--muted); }
+    nav button.active { background: var(--accent); color: white; }
+    nav button:hover:not(.active) { background: #eef0f4; color: var(--text); }
+    main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+    section { display: none; }
+    section.active { display: block; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; flex: 1; min-width: 280px; }
+    .panel h2 { margin: 0 0 12px 0; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; }
+    tr:hover { background: #fafbfc; }
+    input, textarea, select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: white; width: 100%; }
+    textarea { font-family: var(--mono); min-height: 80px; }
+    label { display: block; margin: 8px 0 4px; font-size: 12px; color: var(--muted); }
+    button.primary { background: var(--accent); color: white; border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    button.danger { background: var(--err); color: white; border: 0; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+    .pill.run { background: #dbeafe; color: #1e40af; }
+    .pill.wait { background: #fef3c7; color: #92400e; }
+    .pill.done { background: #d1fae5; color: #065f46; }
+    .pill.sensitive { background: #fee2e2; color: #991b1b; }
+    .pill.safe { background: #e0e7ff; color: #3730a3; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 6px; font-family: var(--mono); font-size: 12px; max-height: 320px; overflow: auto; }
+    .events { font-family: var(--mono); font-size: 12px; max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 8px; background: #0f172a; color: #e2e8f0; }
+    .events .ev { padding: 2px 0; }
+    .events .ev.start { color: #93c5fd; }
+    .events .ev.tool_call { color: #fbbf24; }
+    .events .ev.tool_result { color: #34d399; }
+    .events .ev.hitl_required { color: #f87171; font-weight: 600; }
+    .events .ev.hitl_resolved { color: #a78bfa; }
+    .events .ev.finish { color: #6ee7b7; }
+    .events .ev.error { color: #fca5a5; }
+    .events .ev.compressed { color: #fbbf24; }
+    .events .ev.assistant { color: #e2e8f0; }
+    .empty { color: var(--muted); padding: 24px; text-align: center; }
+    .toast { position: fixed; top: 16px; right: 16px; background: var(--text); color: white; padding: 10px 14px; border-radius: 6px; opacity: 0; transform: translateY(-8px); transition: all 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: var(--err); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Agent Platform · Admin Dashboard</h1>
+    <span class="meta" id="server-meta">…</span>
+  </header>
+
+  <nav>
+    <button data-tab="agents" class="active">Agents</button>
+    <button data-tab="debug">Debug Chat</button>
+    <button data-tab="checkpoints">Checkpoints</button>
+    <button data-tab="hitl">HITL Pending</button>
+    <button data-tab="tools">Tools</button>
+    <button data-tab="providers">Providers</button>
+  </nav>
+
+  <main>
+    <!-- ============ Agents tab ============ -->
+    <section id="tab-agents" class="active">
+      <div class="row">
+        <div class="panel" style="max-width: 360px;">
+          <h2>Agents</h2>
+          <table id="agents-table">
+            <thead><tr><th>id</th><th>model</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <button class="primary" style="margin-top:12px;" onclick="newAgent()">+ New Agent</button>
+        </div>
+        <div class="panel" style="flex: 2;">
+          <h2 id="agent-editor-title">Editor</h2>
+          <div id="agent-editor"><div class="empty">Select an agent on the left to edit.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Debug chat tab ============ -->
+    <section id="tab-debug">
+      <div class="panel">
+        <h2>Send a message</h2>
+        <div class="row">
+          <div style="flex:1; min-width: 200px;">
+            <label>Agent</label>
+            <select id="debug-agent"></select>
+          </div>
+          <div style="flex:1; min-width: 200px;">
+            <label>Thread ID (optional — empty = new)</label>
+            <input id="debug-thread" placeholder="auto-generated if empty" />
+          </div>
+          <div style="flex:1; min-width: 200px;">
+            <label>Approval ID (for HITL resume)</label>
+            <input id="debug-approval" placeholder="from a hitl_required event" />
+          </div>
+        </div>
+        <label>Content</label>
+        <textarea id="debug-content" placeholder="please echo hello&#10;or&#10;save a note to notes/demo.txt"></textarea>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button class="primary" onclick="sendChat()">Send (SSE)</button>
+          <button class="primary" onclick="decideHitl('approve')">Approve &amp; Resume</button>
+          <button class="danger" onclick="decideHitl('reject')">Reject</button>
+          <button class="ghost" onclick="document.getElementById('debug-content').value=''; document.getElementById('debug-approval').value='';">Clear</button>
+          <span id="debug-thread-display" class="meta" style="margin-left:auto; align-self:center;"></span>
+        </div>
+        <h2 style="margin-top:18px;">Events</h2>
+        <div id="debug-events" class="events"><div class="empty" style="color:#94a3b8;">No events yet.</div></div>
+      </div>
+    </section>
+
+    <!-- ============ Checkpoints tab ============ -->
+    <section id="tab-checkpoints">
+      <div class="panel">
+        <h2>Active checkpoints</h2>
+        <table id="ckpt-table">
+          <thead><tr><th>thread_id</th><th>status</th><th>turn</th><th>msgs</th><th>agent</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <h2>Snapshot JSON</h2>
+        <pre id="ckpt-json"><span style="color:#94a3b8;">Click a row above to view.</span></pre>
+      </div>
+    </section>
+
+    <!-- ============ HITL pending tab ============ -->
+    <section id="tab-hitl">
+      <div class="panel">
+        <h2>Awaiting approval</h2>
+        <table id="hitl-table">
+          <thead><tr><th>thread_id</th><th>agent</th><th>tool</th><th>turn</th><th>actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="meta" style="margin-top:10px;">Approving resumes the thread immediately and shows the resulting stream in the Debug Chat tab.</p>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <h2>Active approvals</h2>
+        <p class="meta">A recorded approval covers <strong>one target</strong> and expires. While one is live, matching calls run without asking again — this is what "why did that not prompt me?" looks like.</p>
+        <table id="grants-table">
+          <thead><tr><th>agent</th><th>user</th><th>tool</th><th>scope</th><th>expires in</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ Tools tab ============ -->
+    <section id="tab-tools">
+      <div class="panel">
+        <h2>Registered tools</h2>
+        <table id="tools-table">
+          <thead><tr><th>name</th><th>sensitive</th><th>description</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ Providers tab ============ -->
+    <section id="tab-providers">
+      <div class="panel">
+        <h2>Provider API keys</h2>
+        <p class="meta">Keys stored here override environment variables at lookup time and take effect on the next chat without a restart. Values are masked on display.</p>
+        <table id="secrets-table">
+          <thead><tr><th>provider</th><th>key</th><th>value</th><th>source</th><th>updated</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div id="secrets-editor" style="margin-top:14px;"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ---------------- utilities ----------------
+    async function api(path, opts = {}) {
+      const r = await fetch(path, {
+        headers: { 'content-type': 'application/json', ...(opts.headers || {}) },
+        ...opts,
+      });
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(`${r.status} ${r.statusText}: ${text}`);
+      }
+      const ct = r.headers.get('content-type') || '';
+      return ct.includes('json') ? r.json() : r.text();
+    }
+    function toast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.toggle('error', isError);
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ---------------- tabs ----------------
+    document.querySelectorAll('nav button').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('main > section').forEach(s => s.classList.remove('active'));
+        b.classList.add('active');
+        document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+        // Refresh on tab switch.
+        const fn = window['load_' + b.dataset.tab];
+        if (fn) fn();
+      });
+    });
+
+    // ---------------- Agents tab ----------------
+    let currentAgentId = null;
+    async function load_agents() {
+      const cfgs = await api('/admin/api/configs');
+      const tb = document.querySelector('#agents-table tbody');
+      tb.innerHTML = '';
+      for (const c of cfgs) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><a href="#" onclick="editAgent('${escapeHtml(c.agent_id)}'); return false;"><b>${escapeHtml(c.agent_id)}</b></a></td>
+                        <td>${escapeHtml(c.model)}</td>
+                        <td><button class="ghost" onclick="editAgent('${escapeHtml(c.agent_id)}')">edit</button></td>`;
+        tb.appendChild(tr);
+      }
+      // Refresh Debug Chat dropdown.
+      const sel = document.getElementById('debug-agent');
+      sel.innerHTML = '';
+      for (const c of cfgs) {
+        const o = document.createElement('option');
+        o.value = c.agent_id;
+        o.textContent = `${c.agent_id} (${c.model})`;
+        sel.appendChild(o);
+      }
+      if (currentAgentId === null && cfgs.length > 0) editAgent(cfgs[0].agent_id);
+    }
+    function newAgent() {
+      const id = prompt('New agent_id:');
+      if (!id) return;
+      currentAgentId = id;
+      document.getElementById('agent-editor-title').textContent = `New: ${id}`;
+      renderEditor({
+        agent_id: id, system_prompt: '', model: 'mock', temperature: 0.7,
+        max_tokens: 2048, tools: [], skills: [], sensitive_tools: [], metadata: {},
+      });
+    }
+    async function editAgent(id) {
+      currentAgentId = id;
+      document.getElementById('agent-editor-title').textContent = `Edit: ${id}`;
+      const cfg = await api('/admin/api/configs/' + encodeURIComponent(id));
+      renderEditor(cfg);
+    }
+    function renderEditor(cfg) {
+      const el = document.getElementById('agent-editor');
+      el.innerHTML = `
+        <label>system_prompt</label>
+        <textarea id="ed-prompt">${escapeHtml(cfg.system_prompt)}</textarea>
+        <div class="row">
+          <div style="flex:1; min-width: 120px;"><label>model</label><input id="ed-model" value="${escapeHtml(cfg.model)}" /></div>
+          <div style="flex:1; min-width: 120px;"><label>temperature</label><input id="ed-temp" type="number" step="0.05" value="${cfg.temperature}" /></div>
+          <div style="flex:1; min-width: 120px;"><label>max_tokens</label><input id="ed-max" type="number" value="${cfg.max_tokens}" /></div>
+        </div>
+        <label>tools (comma-separated)</label>
+        <input id="ed-tools" value="${escapeHtml((cfg.tools || []).join(', '))}" />
+        <label>sensitive_tools (comma-separated)</label>
+        <input id="ed-sensitive" value="${escapeHtml((cfg.sensitive_tools || []).join(', '))}" />
+        <label>skills (comma-separated)</label>
+        <input id="ed-skills" value="${escapeHtml((cfg.skills || []).join(', '))}" />
+        <div style="margin-top:14px; display:flex; gap:8px;">
+          <button class="primary" onclick="saveAgent()">Save</button>
+          <button class="danger" onclick="deleteAgent()">Delete</button>
+        </div>
+      `;
+    }
+    function csv(s) { return s.split(',').map(x => x.trim()).filter(Boolean); }
+    async function saveAgent() {
+      const body = {
+        system_prompt: document.getElementById('ed-prompt').value,
+        model: document.getElementById('ed-model').value,
+        temperature: parseFloat(document.getElementById('ed-temp').value),
+        max_tokens: parseInt(document.getElementById('ed-max').value, 10),
+        tools: csv(document.getElementById('ed-tools').value),
+        sensitive_tools: csv(document.getElementById('ed-sensitive').value),
+        skills: csv(document.getElementById('ed-skills').value),
+      };
+      try {
+        await api('/admin/api/configs/' + encodeURIComponent(currentAgentId), {
+          method: 'PUT', body: JSON.stringify(body),
+        });
+        toast('Saved.');
+        await load_agents();
+      } catch (e) { toast(e.message, true); }
+    }
+    async function deleteAgent() {
+      if (!confirm('Delete config for ' + currentAgentId + '?')) return;
+      try {
+        await api('/admin/api/configs/' + encodeURIComponent(currentAgentId), { method: 'DELETE' });
+        toast('Deleted.');
+        currentAgentId = null;
+        document.getElementById('agent-editor').innerHTML = '<div class="empty">Select an agent.</div>';
+        await load_agents();
+      } catch (e) { toast(e.message, true); }
+    }
+
+    // ---------------- Debug chat ----------------
+    async function load_debug() { await load_agents(); }
+    async function sendChat() {
+      const agentId = document.getElementById('debug-agent').value;
+      const thread = document.getElementById('debug-thread').value.trim();
+      const approval = document.getElementById('debug-approval').value.trim();
+      const content = document.getElementById('debug-content').value;
+      const evBox = document.getElementById('debug-events');
+      evBox.innerHTML = '';
+      const threadDisplay = document.getElementById('debug-thread-display');
+      threadDisplay.textContent = '';
+
+      const r = await fetch('/admin/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          agent_id: agentId,
+          thread_id: thread || null,
+          content,
+          approval_id: approval || null,
+        }),
+      });
+      const actualThread = r.headers.get('x-thread-id');
+      if (actualThread) {
+        threadDisplay.textContent = 'thread=' + actualThread;
+        document.getElementById('debug-thread').value = actualThread;
+      }
+
+      // Non-2xx means the backend rejected the request before the stream
+      // started (e.g. unknown provider in the agent config, 409 awaiting
+      // approval). Render the body so the reason is visible instead of
+      // leaving the panel blank.
+      if (!r.ok) {
+        let detail = '';
+        try { detail = await r.text(); } catch { /* ignore */ }
+        const div = document.createElement('div');
+        div.className = 'ev error';
+        div.textContent = `http ${r.status} ${r.statusText}: ${detail.slice(0, 400)}`;
+        evBox.appendChild(div);
+        return;
+      }
+
+      const reader = r.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      let sawTerminal = false;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let idx;
+        while ((idx = buf.indexOf('\n\n')) >= 0) {
+          const block = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          const evName = handleSseBlock(block, evBox);
+          if (evName === 'finish' || evName === 'error') sawTerminal = true;
+        }
+      }
+      // If the stream closed without a finish/error frame, the connection
+      // died mid-turn. Say so explicitly rather than silently stopping.
+      if (!sawTerminal) {
+        const div = document.createElement('div');
+        div.className = 'ev error';
+        div.textContent = 'stream ended without finish/error — the turn may have been interrupted (check the server log)';
+        evBox.appendChild(div);
+        evBox.scrollTop = evBox.scrollHeight;
+      }
+    }
+    function handleSseBlock(block, evBox) {
+      let event = null, data = null;
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) {
+          try { data = JSON.parse(line.slice(5).trim()); } catch { data = line.slice(5).trim(); }
+        }
+      }
+      if (!event) return null;
+      const div = document.createElement('div');
+      div.className = 'ev ' + event;
+      let label = data && data.content ? `: ${data.content.slice(0, 80)}` : '';
+      if (event === 'tool_call' && data && data.calls) {
+        label = `: ${data.calls.map(c => c.name).join(', ')}`;
+      }
+      if (event === 'tool_result' && data && data.results) {
+        label = `: ${data.results.map(r => `${r.name}=${(r.content || '').slice(0, 60)}`).join(' | ')}`;
+      }
+      if (event === 'hitl_required' && data) {
+        label = `: approval_id=${data.approval_id} tool=${data.tool_name}`;
+        document.getElementById('debug-approval').value = data.approval_id;
+      }
+      if (event === 'error' && data) {
+        const parts = [data.reason, data.error_type, data.message].filter(Boolean);
+        label = `: ${parts.join(' — ')}`;
+      }
+      div.textContent = `${event}${label}`;
+      evBox.appendChild(div);
+      evBox.scrollTop = evBox.scrollHeight;
+      return event;
+    }
+
+    // ---------------- Checkpoints tab ----------------
+    async function load_checkpoints() {
+      const list = await api('/admin/api/checkpoints');
+      const tb = document.querySelector('#ckpt-table tbody');
+      tb.innerHTML = '';
+      if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty">No checkpoints yet.</td></tr>';
+      }
+      for (const c of list) {
+        const tr = document.createElement('tr');
+        const pillClass = c.status === 'waiting_approval' ? 'wait' : c.status === 'finished' ? 'done' : 'run';
+        tr.innerHTML = `<td><a href="#" onclick="viewCheckpoint('${c.thread_id}'); return false;"><code>${c.thread_id.slice(0, 12)}…</code></a></td>
+                        <td><span class="pill ${pillClass}">${c.status}</span></td>
+                        <td>${c.turn}</td>
+                        <td>${c.messages}</td>
+                        <td>${escapeHtml(c.last_config_agent)}</td>
+                        <td><button class="danger" onclick="deleteCheckpoint('${c.thread_id}')">delete</button></td>`;
+        tb.appendChild(tr);
+      }
+    }
+    async function viewCheckpoint(tid) {
+      const snap = await api('/admin/api/checkpoints/' + encodeURIComponent(tid));
+      document.getElementById('ckpt-json').textContent = JSON.stringify(snap, null, 2);
+    }
+    async function deleteCheckpoint(tid) {
+      if (!confirm('Delete checkpoint ' + tid + '?')) return;
+      await api('/admin/api/checkpoints/' + encodeURIComponent(tid), { method: 'DELETE' });
+      toast('Deleted.');
+      await load_checkpoints();
+    }
+
+    // ---------------- HITL decision ----------------
+    // Shared by the Debug Chat buttons and the HITL Pending table. Approving
+    // and then resuming is one action on purpose: approving alone leaves the
+    // thread parked with nothing driving it forward, which is the dead end
+    // this UI used to have.
+    async function decideHitl(decision, threadArg, approvalArg) {
+      const fromTable = threadArg !== undefined;
+      const thread = threadArg ?? document.getElementById('debug-thread').value.trim();
+      const approval = approvalArg ?? document.getElementById('debug-approval').value.trim();
+      const evBox = document.getElementById('debug-events');
+
+      if (!thread || !approval) {
+        evBox.innerHTML = '<div class="ev error">needs a thread_id and an approval_id — send a message that triggers HITL first, or use the HITL Pending tab</div>';
+        document.querySelector('nav button[data-tab="debug"]').click();
+        return;
+      }
+      if (fromTable) {
+        // Keep Debug Chat pointed at this thread so the resume stream lands
+        // somewhere visible.
+        document.getElementById('debug-thread').value = thread;
+        document.getElementById('debug-approval').value = approval;
+        document.querySelector('nav button[data-tab="debug"]').click();
+      }
+
+      const r = await fetch(`/v1/sessions/${thread}/hitl/${decision}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ approval_id: approval }),
+      });
+      const body = await r.text();
+      if (!r.ok) {
+        evBox.innerHTML = `<div class="ev error">${decision} failed: http ${r.status} ${escapeHtml(body.slice(0, 400))}</div>`;
+        return;
+      }
+
+      if (decision === 'reject') {
+        evBox.innerHTML = `<div class="ev hitl_resolved">rejected — thread closed without running the tool</div>`;
+        await load_hitl();
+        await load_grants();
+        return;
+      }
+
+      // Resume on the same thread. Blank content is correct here and is NOT a
+      // user turn: the Loop normalises a blank message to absent.
+      document.getElementById('debug-content').value = '';
+      await sendChat();
+      await load_hitl();
+      await load_grants();
+    }
+
+    // ---------------- approval grants ----------------
+    async function load_grants() {
+      const list = await api('/admin/api/approvals');
+      const tb = document.querySelector('#grants-table tbody');
+      tb.innerHTML = '';
+      if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty">No live approvals.</td></tr>';
+        return;
+      }
+      for (const g of list) {
+        const tr = document.createElement('tr');
+        const mins = Math.floor((g.ttl_seconds || 0) / 60);
+        const label = g.scope ? g.scope.split('/').slice(-3).join('/') : g.scope_label;
+        tr.innerHTML = `<td>${escapeHtml(g.agent_id)}</td>
+                          <td>${escapeHtml(g.user_id)}</td>
+                          <td><code>${escapeHtml(g.tool_name)}</code></td>
+                          <td><code>${escapeHtml(label)}</code></td>
+                          <td>${mins} min</td>
+                          <td><button class="danger" onclick="revokeGrant('${g.agent_id}','${g.user_id}','${g.tool_name}','${encodeURIComponent(g.scope)}')">revoke</button></td>`;
+        tb.appendChild(tr);
+      }
+    }
+    async function revokeGrant(agentId, userId, toolName, scope) {
+      await fetch('/admin/api/approvals/revoke', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          agent_id: agentId, user_id: userId, tool_name: toolName,
+          scope: decodeURIComponent(scope),
+        }),
+      });
+      await load_grants();
+    }
+
+    // ---------------- HITL pending ----------------
+    async function load_hitl() {
+      // Both panels belong to this tab, and the grants table has its own
+      // early-return path below, so refresh it first.
+      await load_grants();
+      const list = await api('/admin/api/hitl/pending');
+      const tb = document.querySelector('#hitl-table tbody');
+      tb.innerHTML = '';
+      if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="5" class="empty">No approvals pending.</td></tr>';
+        return;
+      }
+      for (const c of list) {
+        const tr = document.createElement('tr');
+        // approval_id comes from the Checkpoint itself. Without it a row here
+        // was a dead end: you could see that something was waiting but had no
+        // way to act on it from the UI.
+        const actions = c.approval_id
+          ? `<button class="primary" onclick="decideHitl('approve','${c.thread_id}','${c.approval_id}')">approve</button>
+             <button class="danger" onclick="decideHitl('reject','${c.thread_id}','${c.approval_id}')">reject</button>`
+          : '<span class="meta">no approval_id on this checkpoint</span>';
+        tr.innerHTML = `<td><code>${c.thread_id.slice(0, 12)}…</code>
+                          <button class="ghost" onclick="copyToDebug('${c.thread_id}')">use in debug</button></td>
+                        <td>${escapeHtml(c.agent_id)}</td>
+                        <td>${escapeHtml(c.tool_name || '?')}</td>
+                        <td>${c.turn}</td>
+                        <td>${actions}</td>`;
+        tb.appendChild(tr);
+      }
+    }
+    function copyToDebug(tid) {
+      document.getElementById('debug-thread').value = tid;
+      document.querySelector('nav button[data-tab="debug"]').click();
+    }
+
+    // ---------------- Tools tab ----------------
+    async function load_tools() {
+      const list = await api('/admin/api/tools');
+      const tb = document.querySelector('#tools-table tbody');
+      tb.innerHTML = '';
+      for (const t of list) {
+        const tr = document.createElement('tr');
+        const pill = t.sensitive ? '<span class="pill sensitive">SENSITIVE</span>' : '<span class="pill safe">safe</span>';
+        tr.innerHTML = `<td><code>${escapeHtml(t.name)}</code></td><td>${pill}</td><td>${escapeHtml(t.description)}</td>`;
+        tb.appendChild(tr);
+      }
+    }
+
+    // ---------------- Providers tab ----------------
+    async function load_providers() {
+      const list = await api('/admin/api/secrets');
+      const tb = document.querySelector('#secrets-table tbody');
+      tb.innerHTML = '';
+      for (const s of list) {
+        const tr = document.createElement('tr');
+        const value = s.has_value
+          ? `<code>${escapeHtml(s.masked || '(empty)')}</code>`
+          : '<span class="meta">— not set —</span>';
+        const source = s.source === 'store'
+          ? '<span class="pill done">store</span>'
+          : s.source === 'env'
+            ? '<span class="pill run">env</span>'
+            : '<span class="meta">—</span>';
+        const updated = s.updated_at ? escapeHtml(s.updated_at.replace('T', ' ').slice(0, 19)) : '—';
+        tr.innerHTML = `<td><b>${escapeHtml(s.provider)}</b></td>
+                        <td><code>${escapeHtml(s.name)}</code></td>
+                        <td>${value}</td>
+                        <td>${source}</td>
+                        <td>${updated}</td>
+                        <td>
+                          <button class="ghost" onclick="editSecret('${escapeHtml(s.provider)}','${escapeHtml(s.name)}')">set</button>
+                          ${s.has_value ? `<button class="danger" onclick="deleteSecret('${escapeHtml(s.provider)}','${escapeHtml(s.name)}')">clear</button>` : ''}
+                          ${s.provider === 'deepseek' && s.name === 'api_key' ? `<button class="ghost" onclick="testSecret('${escapeHtml(s.provider)}','${escapeHtml(s.name)}')">test</button>` : ''}
+                        </td>`;
+        tb.appendChild(tr);
+      }
+    }
+    function editSecret(provider, name) {
+      const editor = document.getElementById('secrets-editor');
+      editor.innerHTML = `
+        <h2 style="margin-top:0;">Set ${escapeHtml(provider)} / ${escapeHtml(name)}</h2>
+        <label>value</label>
+        <input id="secret-value" type="password" placeholder="paste API key here" autocomplete="off" />
+        <label>note (optional)</label>
+        <input id="secret-note" placeholder="primary, backup, …" />
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button class="primary" onclick="saveSecret('${escapeHtml(provider)}','${escapeHtml(name)}')">Save</button>
+          <button class="ghost" onclick="document.getElementById('secrets-editor').innerHTML=''">Cancel</button>
+        </div>
+        <p class="meta" style="margin-top:8px;">Stored in Redis under <code>secret:${escapeHtml(provider)}:${escapeHtml(name)}</code>. Takes effect on the next chat without a restart.</p>
+      `;
+      document.getElementById('secret-value').focus();
+    }
+    async function saveSecret(provider, name) {
+      const value = document.getElementById('secret-value').value;
+      const note = document.getElementById('secret-note').value;
+      if (!value) { toast('value is empty', true); return; }
+      try {
+        const r = await api(`/admin/api/secrets/${encodeURIComponent(provider)}/${encodeURIComponent(name)}`, {
+          method: 'PUT', body: JSON.stringify({ value, note }),
+        });
+        const inv = (r.invalidated_agents || []).join(', ') || 'none';
+        toast(`Saved. Invalidated: ${inv}`);
+        document.getElementById('secrets-editor').innerHTML = '';
+        await load_providers();
+      } catch (e) { toast(e.message, true); }
+    }
+    async function deleteSecret(provider, name) {
+      if (!confirm(`Clear ${provider}/${name}? Chat will fall back to env or mock.`)) return;
+      try {
+        await api(`/admin/api/secrets/${encodeURIComponent(provider)}/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        toast('Cleared.');
+        await load_providers();
+      } catch (e) { toast(e.message, true); }
+    }
+    async function testSecret(provider, name) {
+      try {
+        const r = await api(`/admin/api/secrets/${encodeURIComponent(provider)}/${encodeURIComponent(name)}/test`, { method: 'POST' });
+        if (r.ok) toast('Connection OK');
+        else toast(`Failed: ${r.status || ''} ${r.detail || ''}`.trim(), true);
+      } catch (e) { toast(e.message, true); }
+    }
+
+    // ---------------- boot ----------------
+    (async () => {
+      try {
+        const health = await api('/healthz');
+        document.getElementById('server-meta').textContent = `v${health.version} · ${window.location.host}`;
+      } catch (e) {
+        document.getElementById('server-meta').textContent = 'server unreachable';
+      }
+      await load_agents();
+      await load_tools();
+    })();
+  </script>
+</body>
+</html>

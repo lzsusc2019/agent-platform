@@ -1,0 +1,33 @@
+# Agent definitions.
+#
+# Seeded into the runtime store at startup: for each agent below, if its
+# agent_id is not already present in Redis it is created from here. Existing
+# entries are left untouched, so anything you change in the Dashboard
+# survives a restart. To force a re-seed, delete the agent in the Dashboard
+# (or drop its Redis key) and restart.
+#
+# Precedence for a seeded field: this file, then the agent_default_* settings
+# in config/platform.yaml, then code defaults.
+#
+# Path is configurable via AGENT_PLATFORM_AGENT_SEED_FILE; set that to an
+# empty string to disable seeding entirely.
+
+agents:
+  - agent_id: demo
+    model: deepseek-flash
+    system_prompt: |
+      You are a helpful assistant. Use the available tools when the user
+      asks you to.
+    temperature: 0.7
+    max_tokens: 2048
+    tools:
+      - echo
+      - http_get
+      - write_file
+    # Tools listed here interrupt the turn for human approval before running.
+    sensitive_tools:
+      - write_file
+    skills: []
+    metadata:
+      owner: platform-team
+      version: 0.1.0

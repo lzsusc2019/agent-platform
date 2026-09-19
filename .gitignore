@@ -1,0 +1,42 @@
+# --- Secrets: never commit these -----------------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Operator config: never commit these ----------------------------------
+# Both files hold credentials and this repository is public.
+#
+#   config/platform.yaml        the operator's platform config (holds the key)
+#   config/platform.local.yaml  optional per-machine overlay; wins over the above
+#
+# config/platform.yaml is deliberately untracked: a secret committed once is in
+# the history forever, and scrubbing it after a push is not something you get to
+# do quietly. A fresh clone runs on code defaults plus environment variables,
+# which is enough to start (see README section "配置分层").
+config/platform.yaml
+config/platform.local.yaml
+
+# --- Runtime output -------------------------------------------------------
+# Default root for the approval-gated write_file tool.
+workspace/
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# --- Tooling --------------------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Editors / OS ---------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/

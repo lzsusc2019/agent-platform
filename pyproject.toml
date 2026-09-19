@@ -1,0 +1,98 @@
+[project]
+name = "agent-platform"
+version = "0.1.0"
+description = "MVP skeleton for the 灵枢 Agent Middleware Platform — ReAct Loop, Checkpoint persistence, HITL approval, SSE streaming. Sandbox / hot reload / MCP are stubbed for future work."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "lzsusc2019" },
+]
+keywords = [
+    "agent",
+    "llm",
+    "react",
+    "hitl",
+    "checkpoint",
+    "middleware",
+    "platform",
+    "ai-agents",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    # Web
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sse-starlette>=2.1.3",
+    # Data
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.4.0",
+    # LLM client (optional but useful for real-model swap-in)
+    "langchain-core>=0.3.0",
+    "langgraph>=0.2.0",
+    # Storage
+    "redis>=5.0.0",
+    # Observability
+    "structlog>=24.4.0",
+]
+
+[project.optional-dependencies]
+# Real LLM providers (not needed for MVP default mock)
+openai = ["langchain-openai>=0.2.0"]
+# Dashboard / admin (future)
+test = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "fakeredis>=2.24.0",
+    "httpx>=0.27.0",
+    "respx>=0.21.0",
+]
+dev = [
+    "ruff>=0.7.0",
+    "mypy>=1.13.0",
+]
+
+[project.urls]
+Repository = "https://github.com/lzsusc2019/agent-platform"
+Issues = "https://github.com/lzsusc2019/agent-platform/issues"
+
+[project.scripts]
+agent-platform = "agent_platform.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_platform"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true

@@ -12,13 +12,13 @@ import asyncio
 
 import pytest
 
-from agent_platform.checkpoint.store import CheckpointStore, snapshot_key
-from agent_platform.config import Settings
-from agent_platform.config_store import AgentConfig
-from agent_platform.core.agent_loop import _estimate_tokens, _maybe_compress
-from agent_platform.core.messages import Message, MessageRole
-from agent_platform.core.providers import create_chat_model, validate_api_key
-from agent_platform.core.tool import ToolContext
+from agent_platform.config.settings import Settings
+from agent_platform.domain.agent_loop import _estimate_tokens, _maybe_compress
+from agent_platform.domain.messages import Message, MessageRole
+from agent_platform.domain.tool import ToolContext
+from agent_platform.infra.checkpoint_store import CheckpointStore, snapshot_key
+from agent_platform.infra.config_store import AgentConfig
+from agent_platform.infra.providers import create_chat_model, validate_api_key
 from agent_platform.tools import build_default_registry
 from agent_platform.tools.builtins import HttpGetTool
 

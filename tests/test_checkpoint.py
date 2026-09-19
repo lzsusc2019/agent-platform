@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from agent_platform.checkpoint.store import CheckpointStore, new_idempotency_key
-from agent_platform.core.checkpoint import (
+from agent_platform.domain.checkpoint import (
     CHECKPOINT_VERSION,
     CheckpointSnapshot,
     CheckpointVersionError,
     ToolPendingState,
 )
-from agent_platform.core.messages import Message, MessageRole
+from agent_platform.domain.messages import Message, MessageRole
+from agent_platform.infra.checkpoint_store import CheckpointStore, new_idempotency_key
 
 
 @pytest.mark.asyncio

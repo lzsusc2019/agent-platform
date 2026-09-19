@@ -24,11 +24,11 @@ from typing import Any, ClassVar
 
 import pytest
 
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.core.agent_loop import AgentLoop, HITLInterrupt
-from agent_platform.core.messages import MessageRole
-from agent_platform.core.providers import DeepSeekChatModel
+from agent_platform.config.settings import Settings
+from agent_platform.domain.agent_loop import AgentLoop, HITLInterrupt
+from agent_platform.domain.messages import MessageRole
+from agent_platform.infra.checkpoint_store import CheckpointStore
+from agent_platform.infra.providers import DeepSeekChatModel
 from agent_platform.tools import build_default_registry
 
 # --------------------------------------------------------------------------- #
@@ -334,8 +334,8 @@ def test_compression_never_starts_with_an_orphan_tool_message() -> None:
     _split_recent() counts messages one at a time with no notion of the
     assistant/tool pairing, so it could cut between them.
     """
-    from agent_platform.core.agent_loop import _maybe_compress
-    from agent_platform.core.messages import Message, ToolCall
+    from agent_platform.domain.agent_loop import _maybe_compress
+    from agent_platform.domain.messages import Message, ToolCall
 
     messages = [Message(role=MessageRole.SYSTEM, content="sys")]
     # Build a long history, then force the boundary to land mid-pair by
@@ -364,8 +364,8 @@ def test_compression_never_starts_with_an_orphan_tool_message() -> None:
 
 def test_compression_drops_both_halves_of_a_pair() -> None:
     """When the assistant is summarized away, its tool replies go too."""
-    from agent_platform.core.agent_loop import _maybe_compress
-    from agent_platform.core.messages import Message, ToolCall
+    from agent_platform.domain.agent_loop import _maybe_compress
+    from agent_platform.domain.messages import Message, ToolCall
 
     messages = [
         Message(role=MessageRole.SYSTEM, content="sys " * 50),

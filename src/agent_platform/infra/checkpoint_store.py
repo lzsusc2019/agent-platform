@@ -26,13 +26,13 @@ from typing import Any, Protocol
 
 import redis.asyncio as aioredis
 
-from agent_platform.core.checkpoint import (
+from agent_platform.domain.checkpoint import (
     CHECKPOINT_VERSION,
     CheckpointSnapshot,
     CheckpointStatus,
     CheckpointVersionError,
 )
-from agent_platform.core.messages import Message
+from agent_platform.domain.messages import Message
 
 log = logging.getLogger(__name__)
 

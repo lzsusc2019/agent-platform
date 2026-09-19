@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from agent_platform.agent_seed import AgentSeedError, load_agent_seeds
-from agent_platform.approvals import ApprovalStore
-from agent_platform.config import Settings
+from agent_platform.config.seed import AgentSeedError, load_agent_seeds
+from agent_platform.config.settings import Settings
+from agent_platform.infra.approval_store import ApprovalStore
 
 
 def _write(tmp_path, body: str):
@@ -155,12 +155,12 @@ async def test_seed_applies_only_missing_agents(tmp_path) -> None:
     import fakeredis.aioredis  # type: ignore[import-untyped]
 
     from agent_platform.api.app import Runtime
-    from agent_platform.checkpoint.store import CheckpointStore
-    from agent_platform.config_store import AgentConfig, AgentConfigStore
-    from agent_platform.core.llm import MockChatModel
-    from agent_platform.core.providers import create_chat_model
-    from agent_platform.secrets_store import SecretStore
-    from agent_platform.store.agent_manager import AgentManager
+    from agent_platform.domain.llm import MockChatModel
+    from agent_platform.infra.agent_manager import AgentManager
+    from agent_platform.infra.checkpoint_store import CheckpointStore
+    from agent_platform.infra.config_store import AgentConfig, AgentConfigStore
+    from agent_platform.infra.providers import create_chat_model
+    from agent_platform.infra.secrets_store import SecretStore
     from agent_platform.tools import build_default_registry
 
     path = _write(

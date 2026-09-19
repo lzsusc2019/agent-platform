@@ -18,8 +18,8 @@ import json
 
 import pytest
 
-from agent_platform.core.messages import Message, MessageRole, ToolCall
-from agent_platform.core.providers import DeepSeekChatModel
+from agent_platform.domain.messages import Message, MessageRole, ToolCall
+from agent_platform.infra.providers import DeepSeekChatModel
 
 
 class _CapturingClient:

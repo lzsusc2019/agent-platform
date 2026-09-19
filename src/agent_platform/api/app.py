@@ -11,16 +11,16 @@ from dataclasses import dataclass
 
 from fastapi import FastAPI
 
-from agent_platform.agent_seed import AgentSeedError, load_agent_seeds
 from agent_platform.api.routes import router as api_router
-from agent_platform.approvals import ApprovalStore
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.config_store import AgentConfigStore
-from agent_platform.core.llm import ChatModel, MockChatModel
-from agent_platform.core.tool import ToolRegistry
-from agent_platform.secrets_store import SecretStore
-from agent_platform.store.agent_manager import AgentManager
+from agent_platform.config.seed import AgentSeedError, load_agent_seeds
+from agent_platform.config.settings import Settings
+from agent_platform.domain.llm import ChatModel, MockChatModel
+from agent_platform.domain.tool import ToolRegistry
+from agent_platform.infra.agent_manager import AgentManager
+from agent_platform.infra.approval_store import ApprovalStore
+from agent_platform.infra.checkpoint_store import CheckpointStore
+from agent_platform.infra.config_store import AgentConfigStore
+from agent_platform.infra.secrets_store import SecretStore
 from agent_platform.tools import build_default_registry
 
 log = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class Runtime:
             )
         tools = build_default_registry(s)
         llm = MockChatModel()  # default fallback when no model field is set
-        from agent_platform.core.providers import create_chat_model
+        from agent_platform.infra.providers import create_chat_model
 
         # The factory signature is (model_string, api_key_override). The
         # AgentManager calls it with the key it just resolved from the

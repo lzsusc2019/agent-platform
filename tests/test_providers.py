@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from agent_platform.config import Settings
-from agent_platform.core.llm import MockChatModel
-from agent_platform.core.providers import (
+from agent_platform.config.settings import Settings
+from agent_platform.domain.llm import MockChatModel
+from agent_platform.infra.providers import (
     DeepSeekChatModel,
     available_providers,
     create_chat_model,
@@ -74,9 +74,9 @@ def test_create_chat_model_unknown_provider_raises() -> None:
 
 def test_register_provider_then_route() -> None:
     """Custom provider registration via the public API."""
-    class _Fake(ChatModel := __import__("agent_platform.core.llm", fromlist=["ChatModel"]).ChatModel):
+    class _Fake(ChatModel := __import__("agent_platform.domain.llm", fromlist=["ChatModel"]).ChatModel):
         async def ainvoke(self, messages, tools):
-            from agent_platform.core.llm import LLMResponse
+            from agent_platform.domain.llm import LLMResponse
             return LLMResponse(content="fake")
 
     register_provider("fake-test", _Fake)
@@ -85,7 +85,7 @@ def test_register_provider_then_route() -> None:
         assert isinstance(cm, _Fake)
     finally:
         # Clean up so other tests aren't affected.
-        from agent_platform.core import providers
+        from agent_platform.infra import providers
 
         providers._PROVIDERS.pop("fake-test", None)
 
@@ -98,7 +98,7 @@ def test_deepseek_chatmodel_rejects_empty_key() -> None:
 @pytest.mark.asyncio
 async def test_deepseek_chatmodel_sends_correct_request_shape(monkeypatch) -> None:
     """Verify the HTTP payload DeepSeekChatModel sends matches OpenAI's spec."""
-    from agent_platform.core.providers import DeepSeekChatModel
+    from agent_platform.infra.providers import DeepSeekChatModel
 
     captured: dict = {}
 
@@ -159,7 +159,7 @@ async def test_deepseek_chatmodel_sends_correct_request_shape(monkeypatch) -> No
 
 @pytest.mark.asyncio
 async def test_deepseek_chatmodel_handles_4xx_error(monkeypatch) -> None:
-    from agent_platform.core.providers import DeepSeekChatModel
+    from agent_platform.infra.providers import DeepSeekChatModel
 
     class _ErrResponse:
         status_code = 401
@@ -268,7 +268,7 @@ def asyncio_run(coro):
     ],
 )
 def test_http_status_retry_classification(monkeypatch, status, expected_retryable) -> None:
-    from agent_platform.core.llm import LLMError
+    from agent_platform.domain.llm import LLMError
 
     class _Resp:
         status_code = status
@@ -302,7 +302,7 @@ def test_http_status_retry_classification(monkeypatch, status, expected_retryabl
 
 @pytest.mark.asyncio
 async def test_timeout_is_retryable(monkeypatch) -> None:
-    from agent_platform.core.llm import LLMError
+    from agent_platform.domain.llm import LLMError
 
     class _Client:
         def __init__(self, *a, **k):
@@ -330,7 +330,7 @@ async def test_timeout_is_retryable(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_error_message_names_the_model(monkeypatch) -> None:
     """A 400 must say which model id we sent — that is the whole diagnosis."""
-    from agent_platform.core.llm import LLMError
+    from agent_platform.domain.llm import LLMError
 
     class _Resp:
         status_code = 400

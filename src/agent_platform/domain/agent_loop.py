@@ -19,33 +19,33 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from agent_platform.approvals import ApprovalStore
-from agent_platform.checkpoint.store import (
-    CheckpointStore,
-    new_idempotency_key,
-)
-from agent_platform.config import Settings
-from agent_platform.core.checkpoint import (
+from agent_platform.config.settings import Settings
+from agent_platform.domain.checkpoint import (
     CheckpointSnapshot,
     CheckpointStatus,
     ToolPendingState,
 )
-from agent_platform.core.errors import (
+from agent_platform.domain.errors import (
     HITLInterrupt,
     LoopBudgetExceeded,
     LoopEmptyResponse,
     ToolPermissionDenied,
 )
-from agent_platform.core.events import EventType, LoopEvent
-from agent_platform.core.llm import ChatModel
-from agent_platform.core.messages import (
+from agent_platform.domain.events import EventType, LoopEvent
+from agent_platform.domain.llm import ChatModel
+from agent_platform.domain.messages import (
     Message,
     MessageRole,
     ToolCall,
     ToolResult,
     repair_tool_call_ordering,
 )
-from agent_platform.core.tool import ToolContext, ToolRegistry
+from agent_platform.domain.tool import ToolContext, ToolRegistry
+from agent_platform.infra.approval_store import ApprovalStore
+from agent_platform.infra.checkpoint_store import (
+    CheckpointStore,
+    new_idempotency_key,
+)
 
 log = logging.getLogger(__name__)
 

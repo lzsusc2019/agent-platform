@@ -20,7 +20,7 @@ from pathlib import Path
 from httpx import ASGITransport, AsyncClient
 
 from agent_platform.api.app import Runtime, create_app
-from agent_platform.config import Settings
+from agent_platform.config.settings import Settings
 
 
 async def read_sse(resp):
@@ -51,7 +51,7 @@ async def main() -> None:
     await runtime.seed_defaults()
     app = create_app(runtime)
 
-    from agent_platform.agent_seed import load_agent_seeds
+    from agent_platform.config.seed import load_agent_seeds
 
     seeds = load_agent_seeds(settings)
     assert seeds, f"no agents seeded from {settings.agent_seed_file}"

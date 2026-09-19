@@ -10,9 +10,9 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from agent_platform.approvals import ApprovalGrant
-from agent_platform.core.checkpoint import CheckpointStatus
-from agent_platform.core.messages import Message, MessageRole, unanswered_tool_calls
+from agent_platform.domain.checkpoint import CheckpointStatus
+from agent_platform.domain.messages import Message, MessageRole, unanswered_tool_calls
+from agent_platform.infra.approval_store import ApprovalGrant
 
 log = logging.getLogger(__name__)
 router = APIRouter()

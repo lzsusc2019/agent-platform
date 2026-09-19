@@ -7,8 +7,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from agent_platform.core.errors import CheckpointVersionError
-from agent_platform.core.messages import Message
+from agent_platform.domain.errors import CheckpointVersionError
+from agent_platform.domain.messages import Message
 
 __all__ = [
     "CHECKPOINT_VERSION",

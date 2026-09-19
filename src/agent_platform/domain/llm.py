@@ -12,7 +12,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from agent_platform.core.messages import ToolCall
+from agent_platform.domain.messages import ToolCall
 
 __all__ = [
     "ChatModel",

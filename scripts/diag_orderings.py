@@ -14,13 +14,13 @@ import fakeredis.aioredis  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 
 from agent_platform.api.app import Runtime, create_app  # noqa: E402
-from agent_platform.checkpoint.store import CheckpointStore  # noqa: E402
-from agent_platform.config import Settings  # noqa: E402
-from agent_platform.config_store import AgentConfigStore  # noqa: E402
-from agent_platform.core.llm import MockChatModel  # noqa: E402
-from agent_platform.core.providers import create_chat_model  # noqa: E402
-from agent_platform.secrets_store import SecretStore  # noqa: E402
-from agent_platform.store.agent_manager import AgentManager  # noqa: E402
+from agent_platform.config.settings import Settings  # noqa: E402
+from agent_platform.domain.llm import MockChatModel  # noqa: E402
+from agent_platform.infra.agent_manager import AgentManager  # noqa: E402
+from agent_platform.infra.checkpoint_store import CheckpointStore  # noqa: E402
+from agent_platform.infra.config_store import AgentConfigStore  # noqa: E402
+from agent_platform.infra.providers import create_chat_model  # noqa: E402
+from agent_platform.infra.secrets_store import SecretStore  # noqa: E402
 from agent_platform.tools import build_default_registry  # noqa: E402
 
 

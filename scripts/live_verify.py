@@ -25,7 +25,7 @@ from pathlib import Path
 from httpx import ASGITransport, AsyncClient
 
 from agent_platform.api.app import Runtime, create_app
-from agent_platform.config import Settings
+from agent_platform.config.settings import Settings
 
 
 async def read_sse(resp):

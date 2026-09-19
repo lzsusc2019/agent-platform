@@ -18,7 +18,7 @@ for MVP; tens of agents).
 The per-AgentConfig defaults come from `Settings.agent_default_*` so an
 operator can retune them without touching code. Agent *definitions* — the
 seed archive applied at startup — live in `config/agents.yaml` and are
-loaded by `agent_platform.agent_seed`.
+loaded by `agent_platform.config.seed`.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from agent_platform.config import Settings
+from agent_platform.config.settings import Settings
 
 log = logging.getLogger(__name__)
 

@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import pytest
 
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.core.agent_loop import AgentLoop
-from agent_platform.core.llm import ChatModel, LLMResponse, MockChatModel
-from agent_platform.core.messages import ToolCall
+from agent_platform.config.settings import Settings
+from agent_platform.domain.agent_loop import AgentLoop
+from agent_platform.domain.llm import ChatModel, LLMResponse, MockChatModel
+from agent_platform.domain.messages import ToolCall
+from agent_platform.infra.checkpoint_store import CheckpointStore
 from agent_platform.tools import build_default_registry
 
 
@@ -248,7 +248,7 @@ async def test_approval_id_is_persisted_on_the_waiting_snapshot(
 ) -> None:
     """The admin API lists pending approvals from the Checkpoint, so the id has
     to live there rather than being reconstructed from the thread_id."""
-    from agent_platform.core.checkpoint import CheckpointStatus
+    from agent_platform.domain.checkpoint import CheckpointStatus
 
     loop = _loop(ckpt_store, settings)
     events = await _drain(

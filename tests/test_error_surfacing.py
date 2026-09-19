@@ -18,16 +18,16 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from agent_platform.api.app import Runtime, create_app
-from agent_platform.approvals import ApprovalStore
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.config_store import AgentConfig, AgentConfigStore
-from agent_platform.core.agent_loop import AgentLoop
-from agent_platform.core.events import EventType
-from agent_platform.core.llm import ChatModel, MockChatModel
-from agent_platform.core.providers import create_chat_model
-from agent_platform.secrets_store import SecretStore
-from agent_platform.store.agent_manager import AgentManager
+from agent_platform.config.settings import Settings
+from agent_platform.domain.agent_loop import AgentLoop
+from agent_platform.domain.events import EventType
+from agent_platform.domain.llm import ChatModel, MockChatModel
+from agent_platform.infra.agent_manager import AgentManager
+from agent_platform.infra.approval_store import ApprovalStore
+from agent_platform.infra.checkpoint_store import CheckpointStore
+from agent_platform.infra.config_store import AgentConfig, AgentConfigStore
+from agent_platform.infra.providers import create_chat_model
+from agent_platform.infra.secrets_store import SecretStore
 from agent_platform.tools import build_default_registry
 
 
@@ -190,7 +190,7 @@ async def test_admin_chat_bad_key_streams_error_frame(runtime: Runtime) -> None:
     event the Dashboard can render — not a silent close."""
     from datetime import datetime
 
-    from agent_platform.secrets_store import SecretEntry
+    from agent_platform.infra.secrets_store import SecretEntry
 
     await runtime.secret_store.set(
         SecretEntry(
@@ -232,7 +232,7 @@ async def test_non_retryable_error_is_not_retried(ckpt_store) -> None:
     operator waited 3.5s to be told something the first response already
     said.
     """
-    from agent_platform.core.llm import LLMError
+    from agent_platform.domain.llm import LLMError
 
     calls = {"n": 0}
 
@@ -264,7 +264,7 @@ async def test_non_retryable_error_is_not_retried(ckpt_store) -> None:
 
 @pytest.mark.asyncio
 async def test_retryable_error_is_retried_to_the_budget(ckpt_store) -> None:
-    from agent_platform.core.llm import LLMError
+    from agent_platform.domain.llm import LLMError
 
     calls = {"n": 0}
 

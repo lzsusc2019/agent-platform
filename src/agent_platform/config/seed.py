@@ -30,8 +30,8 @@ import logging
 import yaml
 from pydantic import BaseModel, Field, ValidationError
 
-from agent_platform.config import Settings, resolve_config_path
-from agent_platform.config_store import AgentConfig
+from agent_platform.config.settings import Settings, resolve_config_path
+from agent_platform.infra.config_store import AgentConfig
 
 log = logging.getLogger(__name__)
 

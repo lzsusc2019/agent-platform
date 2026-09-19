@@ -35,9 +35,9 @@ from typing import Any
 
 import httpx
 
-from agent_platform.config import Settings
-from agent_platform.core.llm import ChatModel, LLMError, LLMResponse, MockChatModel
-from agent_platform.core.messages import ToolCall
+from agent_platform.config.settings import Settings
+from agent_platform.domain.llm import ChatModel, LLMError, LLMResponse, MockChatModel
+from agent_platform.domain.messages import ToolCall
 
 log = logging.getLogger(__name__)
 

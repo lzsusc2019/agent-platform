@@ -24,15 +24,15 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from agent_platform.api.app import Runtime, create_app
-from agent_platform.approvals import ApprovalGrant, ApprovalStore
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.config_store import AgentConfigStore
-from agent_platform.core.agent_loop import AgentLoop
-from agent_platform.core.llm import ChatModel, LLMResponse
-from agent_platform.core.messages import ToolCall
-from agent_platform.secrets_store import SecretStore
-from agent_platform.store.agent_manager import AgentManager
+from agent_platform.config.settings import Settings
+from agent_platform.domain.agent_loop import AgentLoop
+from agent_platform.domain.llm import ChatModel, LLMResponse
+from agent_platform.domain.messages import ToolCall
+from agent_platform.infra.agent_manager import AgentManager
+from agent_platform.infra.approval_store import ApprovalGrant, ApprovalStore
+from agent_platform.infra.checkpoint_store import CheckpointStore
+from agent_platform.infra.config_store import AgentConfigStore
+from agent_platform.infra.secrets_store import SecretStore
 from agent_platform.tools import build_default_registry
 
 

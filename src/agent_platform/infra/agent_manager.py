@@ -18,14 +18,14 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from agent_platform.approvals import ApprovalStore
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.config_store import AgentConfigStore
-from agent_platform.core.agent_loop import AgentLoop
-from agent_platform.core.llm import ChatModel
-from agent_platform.core.tool import ToolRegistry
-from agent_platform.secrets_store import SecretStore
+from agent_platform.config.settings import Settings
+from agent_platform.domain.agent_loop import AgentLoop
+from agent_platform.domain.llm import ChatModel
+from agent_platform.domain.tool import ToolRegistry
+from agent_platform.infra.approval_store import ApprovalStore
+from agent_platform.infra.checkpoint_store import CheckpointStore
+from agent_platform.infra.config_store import AgentConfigStore
+from agent_platform.infra.secrets_store import SecretStore
 
 log = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ class AgentManager:
                 f"core.providers.create_chat_model in production."
             )
         # Resolve the provider id and look up its key in the SecretStore.
-        from agent_platform.core.providers import parse_model_string
+        from agent_platform.infra.providers import parse_model_string
 
         provider, _ = parse_model_string(model_string)
         api_key = await self._resolve_provider_key(provider)
@@ -176,7 +176,7 @@ class AgentManager:
                 # (or edited straight in Redis) can still be hostile. Reject
                 # it here with the same actionable message rather than
                 # letting httpx raise an opaque UnicodeEncodeError later.
-                from agent_platform.core.providers import validate_api_key
+                from agent_platform.infra.providers import validate_api_key
 
                 candidate = entry.value.strip()
                 try:
@@ -203,7 +203,7 @@ class AgentManager:
         secrets PUT/DELETE endpoints (or on a timer) to make secret
         changes take effect without a process restart.
         """
-        from agent_platform.core.providers import parse_model_string
+        from agent_platform.infra.providers import parse_model_string
 
         invalidated: list[str] = []
         if self._secret_store is None:

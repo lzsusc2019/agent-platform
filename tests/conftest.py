@@ -11,15 +11,15 @@ from __future__ import annotations
 import pytest
 import pytest_asyncio
 
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import (
+from agent_platform.config.settings import (
     DEEPSEEK_KEY_ENV_VARS,
     LOCAL_YAML_ENV,
     PLATFORM_YAML_ENV,
     Settings,
 )
-from agent_platform.core.agent_loop import AgentLoop
-from agent_platform.core.llm import MockChatModel
+from agent_platform.domain.agent_loop import AgentLoop
+from agent_platform.domain.llm import MockChatModel
+from agent_platform.infra.checkpoint_store import CheckpointStore
 from agent_platform.tools import build_default_registry
 
 

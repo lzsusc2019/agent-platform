@@ -18,9 +18,9 @@ import typer
 import uvicorn
 from fastapi import FastAPI
 
-from agent_platform.agent_seed import load_agent_seeds
 from agent_platform.api.app import Runtime, create_app
-from agent_platform.config import Settings
+from agent_platform.config.seed import load_agent_seeds
+from agent_platform.config.settings import Settings
 
 app = typer.Typer(help="Agent Platform MVP CLI")
 

@@ -46,12 +46,19 @@ LOCAL_YAML_ENV = "AGENT_PLATFORM_LOCAL_YAML_FILE"
 def project_root() -> Path | None:
     """The repository root, located from this file rather than the CWD.
 
-    `src/agent_platform/config.py` -> `parents[2]` is the directory holding
-    `config/`, `pyproject.toml` and `README.md`. Returns None when the package
-    is installed into site-packages, where no source tree exists.
+    Walks up looking for pyproject.toml rather than counting `..` segments.
+    The counting version broke the moment this module moved a layer deeper
+    (src/agent_platform/config.py -> src/agent_platform/config/settings.py),
+    and a path helper that silently points one directory short is exactly the
+    failure mode it exists to prevent.
+
+    Returns None when the package is installed into site-packages, where no
+    source tree exists.
     """
-    candidate = Path(__file__).resolve().parents[2]
-    return candidate if (candidate / "pyproject.toml").exists() else None
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "pyproject.toml").exists():
+            return parent
+    return None
 
 
 def resolve_config_path(path: str) -> Path:

@@ -9,12 +9,12 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from agent_platform.api.app import Runtime, create_app
-from agent_platform.approvals import ApprovalStore
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.config_store import AgentConfig, AgentConfigStore
-from agent_platform.core.llm import MockChatModel
-from agent_platform.store.agent_manager import AgentManager
+from agent_platform.config.settings import Settings
+from agent_platform.domain.llm import MockChatModel
+from agent_platform.infra.agent_manager import AgentManager
+from agent_platform.infra.approval_store import ApprovalStore
+from agent_platform.infra.checkpoint_store import CheckpointStore
+from agent_platform.infra.config_store import AgentConfig, AgentConfigStore
 from agent_platform.tools import build_default_registry
 
 # ----- AgentConfigStore -----------------------------------------------------
@@ -91,8 +91,8 @@ async def runtime() -> Runtime:
     redis = fakeredis.aioredis.FakeRedis()
     ckpt = CheckpointStore(redis, ttl_seconds=60)
     cfg_store = AgentConfigStore(redis)
-    from agent_platform.core.providers import create_chat_model
-    from agent_platform.secrets_store import SecretStore
+    from agent_platform.infra.providers import create_chat_model
+    from agent_platform.infra.secrets_store import SecretStore
 
     secret_store = SecretStore(redis)
     approvals = ApprovalStore(redis, ttl_seconds=s.approval_grant_ttl_seconds)
@@ -351,9 +351,9 @@ async def test_secrets_upsert_invalidates_cached_agent(runtime: Runtime) -> None
     # Seed a real key first so DeepSeekChatModel can be built.
     from datetime import datetime
 
-    from agent_platform.config_store import AgentConfig
-    from agent_platform.core.providers import DeepSeekChatModel
-    from agent_platform.secrets_store import SecretEntry
+    from agent_platform.infra.config_store import AgentConfig
+    from agent_platform.infra.providers import DeepSeekChatModel
+    from agent_platform.infra.secrets_store import SecretEntry
 
     await runtime.secret_store.set(
         SecretEntry(

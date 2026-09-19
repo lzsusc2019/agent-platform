@@ -5,7 +5,7 @@ the /v1 API surface so a future ops split (different auth, different
 network exposure) is easy.
 
 Endpoints:
-- GET    /admin/                              -> serves the static dashboard HTML
+- GET    /admin/                              -> serves the dashboard HTML from resource/
 - GET    /admin/api/configs                   -> list all agent configs
 - GET    /admin/api/configs/{agent_id}        -> read one
 - PUT    /admin/api/configs/{agent_id}        -> upsert (invalidates the cached AgentLoop)
@@ -29,14 +29,19 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
-from agent_platform.config_store import AgentConfig
-from agent_platform.core.checkpoint import CheckpointStatus
-from agent_platform.secrets_store import KNOWN_SECRETS, SecretEntry
+from agent_platform.domain.checkpoint import CheckpointStatus
+from agent_platform.infra.config_store import AgentConfig
+from agent_platform.infra.secrets_store import KNOWN_SECRETS, SecretEntry
 
 log = logging.getLogger(__name__)
 router = APIRouter()
 
-DASHBOARD_PATH = Path(__file__).resolve().parent.parent / "static" / "admin.html"
+# The dashboard lives under resource/ alongside the package rather than in a
+# "static" directory: it is a single archived asset served by one endpoint,
+# not a static site with a directory tree to mount.
+DASHBOARD_PATH = (
+    Path(__file__).resolve().parent.parent / "resource" / "admin.html"
+)
 
 
 # ---- pydantic request/response shapes ---------------------------------------
@@ -412,7 +417,7 @@ async def upsert_secret(
     # Catch header-hostile credentials at write time. Otherwise the failure
     # surfaces later as a UnicodeEncodeError from deep inside httpx, which
     # does not name the offending field.
-    from agent_platform.core.providers import validate_api_key
+    from agent_platform.infra.providers import validate_api_key
 
     try:
         validate_api_key(body.value.strip())

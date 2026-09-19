@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from agent_platform.core.tool import Tool, ToolRegistry
+from agent_platform.domain.tool import Tool, ToolRegistry
 
 
 def test_register_and_lookup() -> None:

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from agent_platform.config import Settings
-from agent_platform.core.tool import ToolContext
+from agent_platform.config.settings import Settings
+from agent_platform.domain.tool import ToolContext
 from agent_platform.tools import build_default_registry
 from agent_platform.tools.builtins import WriteFileTool
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from agent_platform.config import (
+from agent_platform.config.settings import (
     DEEPSEEK_KEY_ENV_VARS,
     Settings,
 )
@@ -173,7 +173,7 @@ def test_shipped_platform_yaml_parses() -> None:
 
     import yaml
 
-    from agent_platform.config import PLATFORM_YAML
+    from agent_platform.config.settings import PLATFORM_YAML
 
     # Use the module constant, not the helper: the autouse fixture redirects
     # the helper at a temp file.

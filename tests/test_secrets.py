@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from agent_platform.secrets_store import SecretEntry, SecretStore
+from agent_platform.infra.secrets_store import SecretEntry, SecretStore
 
 
 @pytest.mark.asyncio

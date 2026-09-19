@@ -23,10 +23,10 @@ from pathlib import Path
 
 import fakeredis.aioredis
 
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.core.agent_loop import AgentLoop, HITLInterrupt
-from agent_platform.core.providers import create_chat_model
+from agent_platform.config.settings import Settings
+from agent_platform.domain.agent_loop import AgentLoop, HITLInterrupt
+from agent_platform.infra.checkpoint_store import CheckpointStore
+from agent_platform.infra.providers import create_chat_model
 from agent_platform.tools import build_default_registry
 
 # The system prompt the demo agent ships with today.

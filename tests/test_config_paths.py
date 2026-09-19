@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent_platform.config import (
+from agent_platform.config.settings import (
     DEEPSEEK_KEY_ENV_VARS,
     LOCAL_YAML,
     LOCAL_YAML_ENV,
@@ -40,7 +40,9 @@ def test_project_root_is_the_repo_not_the_cwd(tmp_path, monkeypatch) -> None:
     assert root is not None, "pyproject.toml should mark the repo root"
     assert root != tmp_path
     assert (root / "pyproject.toml").exists()
-    assert (root / "src" / "agent_platform" / "config.py").exists()
+    # Anchor on something the layering does not move: the config archive.
+    assert (root / "src" / "agent_platform").is_dir()
+    assert (root / "config" / "agents.yaml").exists()
 
 
 def test_absolute_paths_pass_through_untouched(tmp_path) -> None:

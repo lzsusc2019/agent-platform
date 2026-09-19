@@ -5,12 +5,12 @@ from __future__ import annotations
 import pytest
 import pytest_asyncio
 
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.config import Settings
-from agent_platform.config_store import AgentConfig, AgentConfigStore
-from agent_platform.core.llm import ChatModel, LLMResponse, MockChatModel
-from agent_platform.core.providers import DeepSeekChatModel
-from agent_platform.store.agent_manager import AgentManager
+from agent_platform.config.settings import Settings
+from agent_platform.domain.llm import ChatModel, LLMResponse, MockChatModel
+from agent_platform.infra.agent_manager import AgentManager
+from agent_platform.infra.checkpoint_store import CheckpointStore
+from agent_platform.infra.config_store import AgentConfig, AgentConfigStore
+from agent_platform.infra.providers import DeepSeekChatModel
 from agent_platform.tools import build_default_registry
 
 

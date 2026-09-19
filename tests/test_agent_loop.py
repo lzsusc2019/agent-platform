@@ -15,15 +15,15 @@ from __future__ import annotations
 import pytest
 from conftest import drain
 
-from agent_platform.checkpoint.store import CheckpointStore
-from agent_platform.core.checkpoint import (
+from agent_platform.domain.checkpoint import (
     CheckpointStatus,
     ToolPendingState,
 )
-from agent_platform.core.errors import (
+from agent_platform.domain.errors import (
     LoopBudgetExceeded,
 )
-from agent_platform.core.events import EventType
+from agent_platform.domain.events import EventType
+from agent_platform.infra.checkpoint_store import CheckpointStore
 
 
 @pytest.mark.asyncio
@@ -125,9 +125,9 @@ async def test_hitl_rejection_terminates(agent, ckpt_store: CheckpointStore) -> 
 @pytest.mark.asyncio
 async def test_max_turns_budget(ckpt_store, tools, llm, settings) -> None:
     """Force the loop over budget by crafting a model that always requests a tool."""
-    from agent_platform.core.agent_loop import AgentLoop
-    from agent_platform.core.llm import ChatModel, LLMResponse
-    from agent_platform.core.messages import ToolCall
+    from agent_platform.domain.agent_loop import AgentLoop
+    from agent_platform.domain.llm import ChatModel, LLMResponse
+    from agent_platform.domain.messages import ToolCall
 
     class AlwaysTool(ChatModel):
         async def ainvoke(self, messages, tools):
@@ -155,9 +155,9 @@ async def test_max_turns_budget(ckpt_store, tools, llm, settings) -> None:
 @pytest.mark.asyncio
 async def test_empty_response_guard(ckpt_store, tools, settings) -> None:
     """Model returns empty 3 times -> LoopEmptyResponse."""
-    from agent_platform.core.agent_loop import AgentLoop
-    from agent_platform.core.errors import LoopEmptyResponse
-    from agent_platform.core.llm import ChatModel, LLMResponse
+    from agent_platform.domain.agent_loop import AgentLoop
+    from agent_platform.domain.errors import LoopEmptyResponse
+    from agent_platform.domain.llm import ChatModel, LLMResponse
 
     class EmptyModel(ChatModel):
         async def ainvoke(self, messages, tools):
@@ -179,8 +179,8 @@ async def test_empty_response_guard(ckpt_store, tools, settings) -> None:
 @pytest.mark.asyncio
 async def test_context_compression_fires(ckpt_store, tools, settings) -> None:
     """With compress_trigger_tokens=100, a long enough message triggers compression."""
-    from agent_platform.core.agent_loop import AgentLoop
-    from agent_platform.core.llm import ChatModel, LLMResponse
+    from agent_platform.domain.agent_loop import AgentLoop
+    from agent_platform.domain.llm import ChatModel, LLMResponse
 
     # Model that just produces a long answer; no tools.
     class LongAnswer(ChatModel):

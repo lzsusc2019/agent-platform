@@ -14,8 +14,8 @@ from typing import Any, ClassVar
 
 import httpx
 
-from agent_platform.config import Settings
-from agent_platform.core.tool import Tool, ToolContext, ToolRegistry
+from agent_platform.config.settings import Settings
+from agent_platform.domain.tool import Tool, ToolContext, ToolRegistry
 
 
 class EchoTool(Tool):

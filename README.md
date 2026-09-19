@@ -104,7 +104,7 @@ curl http://localhost:8000/admin/api/checkpoints/<thread_id>
                                │
                         ┌──────▼──────────────────────┐
                         │     Agent Engine            │
-                        │   (core/agent_loop.py)      │
+                        │ (domain/agent_loop.py)      │
                         │                             │
                         │  ┌──────────────────────┐   │
                         │  │ before_model         │   │
@@ -131,7 +131,56 @@ curl http://localhost:8000/admin/api/checkpoints/<thread_id>
                        └────────────┘ └─────────────┘
 ```
 
-## 4. 关键决策
+## 4. 代码分层
+
+```
+src/agent_platform/
+├── config/            配置层：Settings 四层解析 + agent 种子
+│   ├── settings.py      ← 原 config.py
+│   └── seed.py          ← 原 agent_seed.py
+├── domain/            领域层：agent 本身，不碰 IO
+│   ├── messages.py       Message / ToolCall / ToolResult
+│   ├── events.py         LoopEvent / EventType
+│   ├── errors.py         HITLInterrupt / LoopBudgetExceeded …
+│   ├── checkpoint.py     CheckpointSnapshot 等状态模型
+│   ├── tool.py           Tool 抽象 + ToolRegistry
+│   ├── llm.py            ChatModel 端口 + MockChatModel
+│   └── agent_loop.py     ReAct 循环（974 行，全项目最重的一块）
+├── infra/             基础设施层：所有对外 IO
+│   ├── checkpoint_store.py
+│   ├── config_store.py
+│   ├── secrets_store.py
+│   ├── approval_store.py   ← 原 approvals.py
+│   ├── providers.py        ← 原 core/providers.py
+│   └── agent_manager.py    ← 原 store/agent_manager.py
+├── api/               HTTP 接口层：app / routes（/v1）/ admin（Dashboard）
+├── tools/             工具实现：echo / http_get / write_file
+└── resource/          静态资源归档
+    └── admin.html        ← 原 static/admin.html
+```
+
+**依赖方向单向**：
+
+```
+config ──┐
+         ├──> domain <── infra <── api
+tools ───┘
+```
+
+- `domain/` **不 import** `infra/` 或 `api/`。这是它可测的根本原因：ReAct 循环能在没有
+  Redis、没有 HTTP 的情况下跑完整套逻辑。
+- `infra/` 实现 domain 定义的端口（`ChatModel`、`Tool`），依赖方向指向 domain。
+- `api/` 只做协议转换，不含业务规则。
+
+改动前持久化散在四处（`checkpoint/store.py`、`config_store.py`、`secrets_store.py`、
+`approvals.py`），没有规则说新 store 该放哪；`core/` 里领域模型和适配器混在一起。
+现在"新加一个 store"的答案是唯一的：`infra/`。
+
+> **为什么前端在 `resource/` 而不是 `static/`**：这里只有一个 HTML 文件、由
+> 一个端点服务，不是需要挂载目录树的静态站点。`static/` 这个名字会让人以为
+> 里面还能放一堆 JS/CSS 并自动暴露。
+
+## 5. 关键决策
 
 详见 [`docs/adr/`](docs/adr/)：
 
@@ -141,7 +190,7 @@ curl http://localhost:8000/admin/api/checkpoints/<thread_id>
 - `ADR-004` HITL 三状态机与恢复语义
 - `ADR-005` 配置分层（代码默认 / platform.yaml / 环境变量），代码里不留字面量
 
-## 5. 跑起来
+## 6. 跑起来
 
 ```bash
 # 安装（uv 推荐）
@@ -204,11 +253,11 @@ AGENT_PLATFORM_USE_FAKE_REDIS=true .venv/bin/python -m agent_platform.cli serve
 
 | 位置 | 看什么 |
 |---|---|
-| `core/agent_loop.py` → `run()` | 整个 ReAct 循环、恢复分支、100 轮熔断 |
-| `core/agent_loop.py` → sensitive-tool 检测处 | 哪一次 tool call 触发了 HITL |
-| `core/providers.py` → `DeepSeekChatModel.ainvoke()` | **真实出站 payload**，排查 400/422 必看 |
+| `domain/agent_loop.py` → `run()` | 整个 ReAct 循环、恢复分支、100 轮熔断 |
+| `domain/agent_loop.py` → sensitive-tool 检测处 | 哪一次 tool call 触发了 HITL |
+| `infra/providers.py` → `DeepSeekChatModel.ainvoke()` | **真实出站 payload**，排查 400/422 必看 |
 | `tools/builtins.py` → `WriteFileTool.run()` | 审批放行后的实际写盘，断在这里能确认路径校验 |
-| `store/agent_manager.py` → `_resolve_llm()` | 这次到底解析成了哪个 ChatModel |
+| `infra/agent_manager.py` → `_resolve_llm()` | 这次到底解析成了哪个 ChatModel |
 
 开始调试前先在 Run Configuration 的环境变量里加上 `AGENT_PLATFORM_LOG_LEVEL=DEBUG`。
 
@@ -486,7 +535,7 @@ agent 定义在 `config/agents.yaml` 里，这里只有一个开关：
 和 `config/agents.yaml`。`tests/test_configurability.py` 断言每项设置真的作用于对应
 代码路径且 YAML 与代码默认值不漂移，`tests/test_agent_seed.py` 覆盖种子加载与优先级。
 
-## 6. LLM 供应商配置（DeepSeek / Mock / 自定义）
+## 7. LLM 供应商配置（DeepSeek / Mock / 自定义）
 
 `AgentConfig.model` 字段决定走哪个供应商，格式是 `"provider[:model_name]"`：
 
@@ -519,11 +568,11 @@ export AGENT_PLATFORM_DEEPSEEK_API_KEY=sk-xxx
 
 ### 加新的供应商（OpenAI、Anthropic、local llama…）
 
-实现 `ChatModel` 接口（看 `src/agent_platform/core/llm.py`）然后在 startup 注册：
+实现 `ChatModel` 接口（看 `src/agent_platform/domain/llm.py`）然后在 startup 注册：
 
 ```python
-from agent_platform.core.providers import register_provider
-from agent_platform.core.llm import ChatModel, LLMResponse
+from agent_platform.infra.providers import register_provider
+from agent_platform.domain.llm import ChatModel, LLMResponse
 
 class OpenAIChatModel(ChatModel):
     async def ainvoke(self, messages, tools):
@@ -533,7 +582,7 @@ class OpenAIChatModel(ChatModel):
 register_provider("openai", OpenAIChatModel)
 ```
 
-之后 `model: "openai:gpt-4o-mini"` 就会被路由到这个实现。深架构参考 `DeepSeekChatModel`（`src/agent_platform/core/providers.py`）—— 整段就 ~80 行，因为 DeepSeek 和 OpenAI 的 API 是兼容的，可以直接 copy 改 base_url + 鉴权 header。
+之后 `model: "openai:gpt-4o-mini"` 就会被路由到这个实现。深架构参考 `DeepSeekChatModel`（`src/agent_platform/infra/providers.py`）—— 整段就 ~80 行，因为 DeepSeek 和 OpenAI 的 API 是兼容的，可以直接 copy 改 base_url + 鉴权 header。
 
 curl 例子：
 
@@ -560,7 +609,7 @@ curl -X POST http://localhost:8000/v1/sessions/<sid>/hitl/approve \
   -d '{"approval_id":"<approval_id>"}'
 ```
 
-## 7. 验证脚本
+## 8. 验证脚本
 
 三个脚本，按"要不要花真钱"排序：
 
@@ -622,14 +671,14 @@ Loop 里的用户消息现在是"延后追加"的 —— 先补 tool 结果，�
 另外 `/admin/api/chat` 现在和 `/v1/sessions/{id}/chat` 一样，对 parked 的 thread 返回
 409 而不是默默把用户消息插进悬空调用后面。
 
-## 8. 设计口径提醒
+## 9. 设计口径提醒
 
 - **接口级可用性 vs 业务成功率**：99.9% 是接口级口径；模型抖动、MCP 超时若返回了降级事件，算接口可用
 - **单轮决策 P95 3–6s**：包含 `before_model → llm → after_model → tool → checkpoint 写入`
 - **工具调用成功率 98%**：含自动重试；首次失败 5–7%，靠重试挽回
 - **长程任务中断恢复 99%**：按发生中断的任务统计；1% 失败主要是沙箱回收、外部工具已不可用、Checkpoint 版本不兼容
 
-## 9. 后续路线
+## 10. 后续路线
 
 ```
 MVP (当前)

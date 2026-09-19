@@ -11,10 +11,10 @@
 async with httpx.AsyncClient(timeout=5.0) as client:      # tools/builtins.py
     return f"status={r.status_code} body={r.text[:500]}"
 
-max_tokens: int = 4096                                    # config_store.py
-ttl_seconds: int = 30 * 60                                # checkpoint/store.py
-base_url: str = "https://api.deepseek.com"                # core/providers.py
-agent_id="demo", tools=["echo", "http_get"]               # config_store.py
+max_tokens: int = 4096                                    # infra/config_store.py
+ttl_seconds: int = 30 * 60                                # infra/checkpoint_store.py
+base_url: str = "https://api.deepseek.com"                # infra/providers.py
+agent_id="demo", tools=["echo", "http_get"]               # infra/config_store.py
 ```
 
 问题有三个：**不可运维**（改超时要改代码）、**不可审计**（环境实际值说不清）、

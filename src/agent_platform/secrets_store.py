@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
@@ -73,7 +73,7 @@ class SecretStore:
         self._ttl = ttl_seconds
 
     @classmethod
-    def from_url(cls, url: str, ttl_seconds: int | None = None) -> "SecretStore":
+    def from_url(cls, url: str, ttl_seconds: int | None = None) -> SecretStore:
         import redis.asyncio as aioredis
 
         return cls(aioredis.from_url(url), ttl_seconds=ttl_seconds)
@@ -85,7 +85,7 @@ class SecretStore:
         try:
             data = json.loads(raw)
             return SecretEntry.model_validate(data)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             log.warning(
                 "secret.deserialize_failed provider=%s name=%s error=%s",
                 provider,
@@ -93,11 +93,6 @@ class SecretStore:
                 e,
             )
             return None
-
-    async def get_value(self, provider: str, name: str) -> str | None:
-        """Just the value, for internal lookups (e.g. Settings resolution)."""
-        entry = await self.get(provider, name)
-        return entry.value if entry else None
 
     async def set(self, entry: SecretEntry) -> None:
         payload = entry.model_dump_json()
@@ -123,7 +118,7 @@ class SecretStore:
                 continue
             try:
                 out.append(SecretEntry.model_validate_json(raw))
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 log.warning("secret.list.deserialize_failed key=%s error=%s", k, e)
         return out
 

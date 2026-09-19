@@ -25,7 +25,7 @@ from agent_platform.tools import build_default_registry
 
 log = logging.getLogger(__name__)
 
-__all__ = ["Runtime", "create_app", "AgentSeedError"]
+__all__ = ["AgentSeedError", "Runtime", "create_app"]
 
 
 @dataclass
@@ -48,7 +48,7 @@ class Runtime:
     approval_store: ApprovalStore
 
     @classmethod
-    def default(cls, settings: Settings | None = None) -> "Runtime":
+    def default(cls, settings: Settings | None = None) -> Runtime:
         s = settings or Settings()
         if s.use_fake_redis:
             import fakeredis.aioredis  # type: ignore[import-untyped]

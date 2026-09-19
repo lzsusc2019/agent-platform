@@ -42,8 +42,8 @@ from agent_platform.core.messages import (
     Message,
     MessageRole,
     ToolCall,
-    repair_tool_call_ordering,
     ToolResult,
+    repair_tool_call_ordering,
 )
 from agent_platform.core.tool import ToolContext, ToolRegistry
 

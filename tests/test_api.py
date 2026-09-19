@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 
 import pytest
@@ -58,10 +59,8 @@ async def _read_sse(resp):
         if line.startswith("event:"):
             event_name = line.split(":", 1)[1].strip()
         elif line.startswith("data:") and event_name is not None:
-            try:
+            with contextlib.suppress(json.JSONDecodeError):
                 yield event_name, json.loads(line.split(":", 1)[1])
-            except json.JSONDecodeError:
-                pass
             event_name = None
 
 

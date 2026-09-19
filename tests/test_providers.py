@@ -140,7 +140,6 @@ async def test_deepseek_chatmodel_sends_correct_request_shape(monkeypatch) -> No
         model="deepseek-chat",
         timeout=30.0,
     )
-    from agent_platform.core.llm import LLMResponse as _LR
 
     resp = await cm.ainvoke(
         messages=[{"role": "user", "content": "hello"}],

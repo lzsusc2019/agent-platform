@@ -8,11 +8,10 @@ from agent_platform.checkpoint.store import CheckpointStore, new_idempotency_key
 from agent_platform.core.checkpoint import (
     CHECKPOINT_VERSION,
     CheckpointSnapshot,
-    CheckpointStatus,
     CheckpointVersionError,
     ToolPendingState,
 )
-from agent_platform.core.messages import Message, MessageRole, ToolCall
+from agent_platform.core.messages import Message, MessageRole
 
 
 @pytest.mark.asyncio

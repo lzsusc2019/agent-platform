@@ -28,7 +28,6 @@ provider-side retries (the Loop has its own retry/backoff). See
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import uuid
@@ -183,7 +182,7 @@ class DeepSeekChatModel(ChatModel):
             try:
                 err = r.json()
                 msg = err.get("error", {}).get("message", r.text)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 msg = r.text
             raise LLMError(
                 f"deepseek {r.status_code} (model={self._model}): {msg}",

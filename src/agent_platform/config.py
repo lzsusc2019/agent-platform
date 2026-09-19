@@ -247,8 +247,8 @@ class Settings(BaseSettings):
     # Tokens are estimated with a cheap chars/N heuristic — not an exact
     # tokenizer. Good enough for a fuzzy trigger threshold.
     token_estimate_chars_per_token: int = 4
-    context_window_tokens: int = 260_000
-    compress_trigger_tokens: int = 180_000  # ~70% of window
+    # ~70% of a 260k-token window, leaving room for the reply.
+    compress_trigger_tokens: int = 180_000
     compress_keep_recent_turns: int = 30
 
     # ==================================================================
@@ -276,10 +276,6 @@ class Settings(BaseSettings):
     # ==================================================================
     agent_seed_file: str = "config/agents.yaml"
 
-    # ==================================================================
-    # LLM providers
-    # ==================================================================
-    llm_provider: str = "mock"
 
     # --- DeepSeek ------------------------------------------------------
     # DeepSeek exposes an OpenAI-compatible API: POST {base_url}{chat_path}
@@ -322,11 +318,6 @@ class Settings(BaseSettings):
     # Timeout for the provider-key connectivity check.
     admin_secret_test_timeout: float = 10.0
 
-    # ==================================================================
-    # Not yet implemented (placeholders for the next iteration)
-    # ==================================================================
-    enable_sandbox: bool = False
-    enable_hot_reload: bool = False
 
     # ==================================================================
     # Observability

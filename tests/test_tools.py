@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from agent_platform.core.tool import Tool, ToolContext, ToolRegistry
+from typing import ClassVar
+
+from agent_platform.core.tool import Tool, ToolRegistry
 
 
 def test_register_and_lookup() -> None:
     class _T(Tool):
         name = "x"
         description = "x"
-        parameters = {"type": "object", "properties": {}}
+        parameters: ClassVar[dict] = {"type": "object", "properties": {}}
 
         async def run(self, arguments, ctx):
             return "ok"
@@ -33,7 +35,7 @@ def test_duplicate_register_raises() -> None:
     class _T(Tool):
         name = "dup"
         description = ""
-        parameters = {}
+        parameters: ClassVar[dict] = {}
 
         async def run(self, arguments, ctx):
             return ""

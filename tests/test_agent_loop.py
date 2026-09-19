@@ -13,6 +13,7 @@ Agent中台.md end-to-end:
 from __future__ import annotations
 
 import pytest
+from conftest import drain
 
 from agent_platform.checkpoint.store import CheckpointStore
 from agent_platform.core.checkpoint import (
@@ -20,12 +21,9 @@ from agent_platform.core.checkpoint import (
     ToolPendingState,
 )
 from agent_platform.core.errors import (
-    HITLInterrupt,
     LoopBudgetExceeded,
 )
 from agent_platform.core.events import EventType
-
-from conftest import drain
 
 
 @pytest.mark.asyncio
@@ -110,7 +108,6 @@ async def test_hitl_rejection_terminates(agent, ckpt_store: CheckpointStore) -> 
     approval_id = hitl.data["approval_id"]
 
     # API-layer reject path: we mark the snapshot FINISHED manually.
-    from agent_platform.core.checkpoint import CheckpointSnapshot
     snap = await ckpt_store.load("t4")
     assert snap is not None
     finished = snap.model_copy(
@@ -247,7 +244,7 @@ async def test_done_result_replayed_on_resume(agent, ckpt_store) -> None:
     assert call_count["n"] == 0  # not run yet
 
     # Resume.
-    events2 = await drain(
+    await drain(
         agent,
         thread_id="replay",
         user_id="u",

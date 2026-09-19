@@ -23,7 +23,6 @@ loaded by `agent_platform.agent_seed`.
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
@@ -52,7 +51,7 @@ class AgentConfig(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
-    def with_defaults(cls, agent_id: str, settings: Settings, **overrides: Any) -> "AgentConfig":
+    def with_defaults(cls, agent_id: str, settings: Settings, **overrides: Any) -> AgentConfig:
         """Build a config seeded from `settings.agent_default_*`.
 
         Used by the Admin API when creating a brand-new agent, and by the
@@ -94,7 +93,7 @@ class AgentConfigStore:
         self._ttl = ttl_seconds
 
     @classmethod
-    def from_url(cls, url: str, ttl_seconds: int | None = None) -> "AgentConfigStore":
+    def from_url(cls, url: str, ttl_seconds: int | None = None) -> AgentConfigStore:
         import redis.asyncio as aioredis
 
         return cls(aioredis.from_url(url), ttl_seconds=ttl_seconds)
@@ -105,7 +104,7 @@ class AgentConfigStore:
             return None
         try:
             return AgentConfig.model_validate_json(raw)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             log.warning(
                 "agent_config.deserialize_failed agent_id=%s error=%s",
                 agent_id,

@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from agent_platform.approvals import ApprovalStore
 from agent_platform.checkpoint.store import CheckpointStore
@@ -232,7 +233,7 @@ class AgentManager:
         for slot in list(self._secret_versions.keys()):
             if slot in seen_keys:
                 continue
-            provider, name = slot
+            provider, _ = slot
             current_version = ""
             prior = self._secret_versions[slot]
             if current_version != prior:
@@ -256,9 +257,6 @@ class AgentManager:
         from the latest AgentConfig. Returns True if an instance was removed.
         """
         return self._agents.pop(agent_id, None) is not None
-
-    def all_ids(self) -> list[str]:
-        return list(self._agents.keys())
 
     # TODO: hot-reload loop. Per Agent中台.md: a thread polls config every 90s,
     # builds new instances in parallel, atomically swaps the Map, queues the

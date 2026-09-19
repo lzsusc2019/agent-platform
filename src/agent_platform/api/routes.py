@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Annotated, AsyncIterator
+from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 

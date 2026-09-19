@@ -22,7 +22,6 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from datetime import datetime
 from typing import Any, Protocol
 
 import redis.asyncio as aioredis
@@ -32,7 +31,6 @@ from agent_platform.core.checkpoint import (
     CheckpointSnapshot,
     CheckpointStatus,
     CheckpointVersionError,
-    ToolPendingState,
 )
 from agent_platform.core.messages import Message
 
@@ -53,10 +51,6 @@ def snapshot_key(thread_id: str) -> str:
     return f"ckpt:{thread_id}"
 
 
-def tool_key(idempotency_key: str) -> str:
-    return f"tool:{idempotency_key}"
-
-
 class CheckpointStore:
     """Thin async wrapper over Redis. MVP-grade; not transactional."""
 
@@ -71,7 +65,7 @@ class CheckpointStore:
         self._ttl = ttl_seconds
 
     @classmethod
-    def from_url(cls, url: str, *, ttl_seconds: int) -> "CheckpointStore":
+    def from_url(cls, url: str, *, ttl_seconds: int) -> CheckpointStore:
         return cls(aioredis.from_url(url), ttl_seconds=ttl_seconds)
 
     # ----- snapshot CRUD -----

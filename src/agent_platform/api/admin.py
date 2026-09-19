@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -221,7 +222,7 @@ async def debug_chat(req: DebugChatRequest, request: Request) -> StreamingRespon
     # since the caller is an SSE client that expects an event stream.
     try:
         agent = await rt.agents.get_or_create(req.agent_id)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.exception("admin.chat.setup_failed agent_id=%s", req.agent_id)
         raise HTTPException(
             status_code=400,
@@ -246,7 +247,7 @@ async def debug_chat(req: DebugChatRequest, request: Request) -> StreamingRespon
                 # as proper SSE text for StreamingResponse.
                 sse = ev.to_sse()
                 yield f"event: {sse['event']}\ndata: {sse['data']}\n\n"
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # Safety net. The Loop converts its own failures into `error`
             # events, but LoopBudgetExceeded / LoopEmptyResponse still
             # propagate, and a middleware upstream of the loop could raise.
@@ -398,7 +399,7 @@ async def upsert_secret(
     provider: str, name: str, body: UpsertSecretRequest, request: Request
 ) -> dict[str, Any]:
     """Set a provider secret. Overrides any env var for that provider."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     if provider not in KNOWN_SECRETS or name not in KNOWN_SECRETS[provider]:
         raise HTTPException(
@@ -424,7 +425,7 @@ async def upsert_secret(
         name=name,
         value=body.value.strip(),
         note=body.note,
-        updated_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(UTC),
     )
     await rt.secret_store.set(entry)
     # Drop any cached AgentLoops that depended on this provider's key.

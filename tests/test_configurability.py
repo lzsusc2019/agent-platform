@@ -22,7 +22,6 @@ from agent_platform.core.tool import ToolContext
 from agent_platform.tools import build_default_registry
 from agent_platform.tools.builtins import HttpGetTool
 
-
 # ----- layingering: kwargs > env > .env > platform.yaml > code default -----
 
 
@@ -32,10 +31,10 @@ def _point_at(tmp_path, platform: str = "", local: str = "") -> None:
 
     p = tmp_path / "platform.yaml"
     p.write_text(platform, encoding="utf-8")
-    l = tmp_path / "platform.local.yaml"
-    l.write_text(local, encoding="utf-8")
+    local_path = tmp_path / "platform.local.yaml"
+    local_path.write_text(local, encoding="utf-8")
     os.environ["AGENT_PLATFORM_PLATFORM_YAML_FILE"] = str(p)
-    os.environ["AGENT_PLATFORM_LOCAL_YAML_FILE"] = str(l)
+    os.environ["AGENT_PLATFORM_LOCAL_YAML_FILE"] = str(local_path)
 
 
 @pytest.fixture(autouse=True)

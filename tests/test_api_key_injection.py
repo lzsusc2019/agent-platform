@@ -11,7 +11,6 @@ import pytest
 from agent_platform.config import (
     DEEPSEEK_KEY_ENV_VARS,
     Settings,
-    platform_yaml_path,
 )
 
 KEY_ENV_VARS = (*DEEPSEEK_KEY_ENV_VARS, "AGENT_PLATFORM_PLATFORM_YAML_FILE",
@@ -33,10 +32,10 @@ def _layer(tmp_path, platform: str = "", local: str = "") -> None:
 
     p = tmp_path / "platform.yaml"
     p.write_text(platform, encoding="utf-8")
-    l = tmp_path / "platform.local.yaml"
-    l.write_text(local, encoding="utf-8")
+    local_path = tmp_path / "platform.local.yaml"
+    local_path.write_text(local, encoding="utf-8")
     os.environ["AGENT_PLATFORM_PLATFORM_YAML_FILE"] = str(p)
-    os.environ["AGENT_PLATFORM_LOCAL_YAML_FILE"] = str(l)
+    os.environ["AGENT_PLATFORM_LOCAL_YAML_FILE"] = str(local_path)
 
 
 # ----- the canonical field name -------------------------------------------

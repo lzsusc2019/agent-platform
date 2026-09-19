@@ -9,7 +9,9 @@ and the user could not tell what went wrong. These tests pin the fix.
 
 from __future__ import annotations
 
+import contextlib
 import json
+from datetime import UTC
 
 import pytest
 import pytest_asyncio
@@ -36,10 +38,8 @@ async def _read_sse(resp):
         if line.startswith("event:"):
             event_name = line.split(":", 1)[1].strip()
         elif line.startswith("data:") and event_name is not None:
-            try:
+            with contextlib.suppress(json.JSONDecodeError):
                 yield event_name, json.loads(line.split(":", 1)[1])
-            except json.JSONDecodeError:
-                pass
             event_name = None
 
 
@@ -188,7 +188,7 @@ async def test_admin_chat_unknown_provider_returns_400(runtime: Runtime) -> None
 async def test_admin_chat_bad_key_streams_error_frame(runtime: Runtime) -> None:
     """With a bogus key the stream must still terminate with an `error`
     event the Dashboard can render — not a silent close."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from agent_platform.secrets_store import SecretEntry
 
@@ -197,7 +197,7 @@ async def test_admin_chat_bad_key_streams_error_frame(runtime: Runtime) -> None:
             provider="deepseek",
             name="api_key",
             value="sk-definitely-invalid",
-            updated_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(UTC),
         )
     )
     await runtime.config_store.upsert(
@@ -206,14 +206,13 @@ async def test_admin_chat_bad_key_streams_error_frame(runtime: Runtime) -> None:
     app = create_app(runtime)
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
-        async with ac.stream(
-            "POST",
-            "/admin/api/chat",
-            json={"agent_id": "ds", "content": "hi"},
-        ) as resp:
-            assert resp.status_code == 200
-            events = [(n, d) async for n, d in _read_sse(resp)]
+    ) as ac, ac.stream(
+        "POST",
+        "/admin/api/chat",
+        json={"agent_id": "ds", "content": "hi"},
+    ) as resp:
+        assert resp.status_code == 200
+        events = [(n, d) async for n, d in _read_sse(resp)]
     names = [n for n, _ in events]
     assert names[0] == "start"
     assert "error" in names, f"expected an error frame, got {names}"

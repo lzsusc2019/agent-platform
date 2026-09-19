@@ -168,8 +168,3 @@ class MockChatModel(ChatModel):
             joined = " | ".join(m.get("content", "") for m in tool_msgs)
             return LLMResponse(content=f"done: {joined}")
         return LLMResponse(content="ok")
-
-
-class _NeverToolAgainMock(MockChatModel):
-    """Unused; kept for documentation. Real fix lives in MockChatModel."""
-    pass

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -14,7 +16,6 @@ from agent_platform.config_store import AgentConfig, AgentConfigStore
 from agent_platform.core.llm import MockChatModel
 from agent_platform.store.agent_manager import AgentManager
 from agent_platform.tools import build_default_registry
-
 
 # ----- AgentConfigStore -----------------------------------------------------
 
@@ -90,8 +91,8 @@ async def runtime() -> Runtime:
     redis = fakeredis.aioredis.FakeRedis()
     ckpt = CheckpointStore(redis, ttl_seconds=60)
     cfg_store = AgentConfigStore(redis)
-    from agent_platform.secrets_store import SecretStore
     from agent_platform.core.providers import create_chat_model
+    from agent_platform.secrets_store import SecretStore
 
     secret_store = SecretStore(redis)
     approvals = ApprovalStore(redis, ttl_seconds=s.approval_grant_ttl_seconds)
@@ -347,12 +348,11 @@ async def test_secrets_delete_clears(runtime: Runtime) -> None:
 @pytest.mark.asyncio
 async def test_secrets_upsert_invalidates_cached_agent(runtime: Runtime) -> None:
     """Changing the key should drop any cached AgentLoop for that provider."""
+    # Seed a real key first so DeepSeekChatModel can be built.
+    from datetime import datetime
+
     from agent_platform.config_store import AgentConfig
     from agent_platform.core.providers import DeepSeekChatModel
-
-    # Seed a real key first so DeepSeekChatModel can be built.
-    from datetime import datetime, timezone
-
     from agent_platform.secrets_store import SecretEntry
 
     await runtime.secret_store.set(
@@ -360,7 +360,7 @@ async def test_secrets_upsert_invalidates_cached_agent(runtime: Runtime) -> None
             provider="deepseek",
             name="api_key",
             value="sk-initial",
-            updated_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(UTC),
         )
     )
 

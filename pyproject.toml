@@ -36,18 +36,15 @@ dependencies = [
     # Data
     "pydantic>=2.8.0",
     "pydantic-settings>=2.4.0",
-    # LLM client (optional but useful for real-model swap-in)
-    "langchain-core>=0.3.0",
-    "langgraph>=0.2.0",
     # Storage
     "redis>=5.0.0",
-    # Observability
-    "structlog>=24.4.0",
 ]
 
 [project.optional-dependencies]
-# Real LLM providers (not needed for MVP default mock)
-openai = ["langchain-openai>=0.2.0"]
+# NOTE: deliberately no extra for "real providers". Adding one is an ~80-line
+# ChatModel subclass plus register_provider() — see ADR-002 and
+# agent_platform/core/providers.py. Pulling in a framework for that is the
+# thing this project decided against.
 # Dashboard / admin (future)
 test = [
     "pytest>=8.3.0",
@@ -89,7 +86,24 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
-ignore = ["E501", "B008"]
+ignore = [
+    "E501",  # line length is the formatter job
+    "B008",  # FastAPI Depends()/Query() is a call in a default, by design
+    # (str, Enum) rather than StrEnum: str(member) differs between the two
+    # ("EventType.START" vs "start"), and f-strings and log lines here depend
+    # on the explicit form. Migrating changes behaviour for no functional
+    # gain, so this is a deliberate no.
+    "UP042",
+    # Exception names are part of the contract: admin SSE frames publish
+    # error_type as the class name, and callers import these directly.
+    # Renaming them is a breaking change, not a lint fix.
+    "N818",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The prompts ARE the test data: fullwidth punctuation is what a Chinese user
+# actually types, so "ambiguous" characters are the point, not a typo.
+"scripts/probe_natural_language.py" = ["RUF001"]
 
 [tool.mypy]
 python_version = "3.11"

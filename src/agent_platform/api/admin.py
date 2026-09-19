@@ -29,6 +29,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+from agent_platform.config.settings import project_root
 from agent_platform.domain.checkpoint import CheckpointStatus
 from agent_platform.infra.config_store import AgentConfig
 from agent_platform.infra.secrets_store import KNOWN_SECRETS, SecretEntry
@@ -36,11 +37,19 @@ from agent_platform.infra.secrets_store import KNOWN_SECRETS, SecretEntry
 log = logging.getLogger(__name__)
 router = APIRouter()
 
-# The dashboard lives under resource/ alongside the package rather than in a
-# "static" directory: it is a single archived asset served by one endpoint,
-# not a static site with a directory tree to mount.
-DASHBOARD_PATH = (
-    Path(__file__).resolve().parent.parent / "resource" / "admin.html"
+# The dashboard is archived at <repo>/resource/static/admin.html, outside the
+# package. Resolved through project_root() rather than by walking up from
+# __file__: the file has already moved once (out of the package, into
+# resource/), and a hardcoded number of ".." silently points somewhere wrong
+# the next time it does.
+#
+# Consequence worth stating: a wheel install has no repository root, so
+# DASHBOARD_PATH is None there and /admin/ reports that instead of serving a
+# page. That is the trade for keeping operator-facing assets out of the
+# importable package.
+_root = project_root()
+DASHBOARD_PATH: Path | None = (
+    (_root / "resource" / "static" / "admin.html") if _root else None
 )
 
 
@@ -64,8 +73,20 @@ class UpsertConfigRequest(BaseModel):
 @router.get("/admin", include_in_schema=False)
 @router.get("/admin/", include_in_schema=False)
 async def admin_index() -> FileResponse:
+    if DASHBOARD_PATH is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "dashboard HTML not found: resource/static/admin.html is "
+                "resolved from the repository root, which does not exist for "
+                "an installed package"
+            ),
+        )
     if not DASHBOARD_PATH.exists():
-        raise HTTPException(status_code=503, detail="dashboard HTML missing")
+        raise HTTPException(
+            status_code=503,
+            detail="dashboard HTML missing at " + str(DASHBOARD_PATH),
+        )
     return FileResponse(DASHBOARD_PATH, media_type="text/html")
 
 

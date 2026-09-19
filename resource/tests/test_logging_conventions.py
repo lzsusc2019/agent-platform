@@ -25,7 +25,13 @@ from pathlib import Path
 
 import pytest
 
-SRC_ROOT = Path(__file__).resolve().parent.parent / "src" / "agent_platform"
+from agent_platform.config.settings import project_root
+
+# Resolved the same way the application does, so relocating the test suite
+# cannot silently repoint it (it did, when the suite moved under resource/).
+_repo_root = project_root()
+assert _repo_root is not None, "tests must run from a source checkout"
+SRC_ROOT = _repo_root / "src" / "agent_platform"
 
 # The only keyword arguments stdlib logging actually accepts on the
 # convenience methods.

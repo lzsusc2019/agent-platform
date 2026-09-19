@@ -134,29 +134,33 @@ curl http://localhost:8000/admin/api/checkpoints/<thread_id>
 ## 4. 代码分层
 
 ```
-src/agent_platform/
-├── config/            配置层：Settings 四层解析 + agent 种子
-│   ├── settings.py      ← 原 config.py
-│   └── seed.py          ← 原 agent_seed.py
-├── domain/            领域层：agent 本身，不碰 IO
-│   ├── messages.py       Message / ToolCall / ToolResult
-│   ├── events.py         LoopEvent / EventType
-│   ├── errors.py         HITLInterrupt / LoopBudgetExceeded …
-│   ├── checkpoint.py     CheckpointSnapshot 等状态模型
-│   ├── tool.py           Tool 抽象 + ToolRegistry
-│   ├── llm.py            ChatModel 端口 + MockChatModel
-│   └── agent_loop.py     ReAct 循环（974 行，全项目最重的一块）
-├── infra/             基础设施层：所有对外 IO
-│   ├── checkpoint_store.py
-│   ├── config_store.py
-│   ├── secrets_store.py
-│   ├── approval_store.py   ← 原 approvals.py
-│   ├── providers.py        ← 原 core/providers.py
-│   └── agent_manager.py    ← 原 store/agent_manager.py
-├── api/               HTTP 接口层：app / routes（/v1）/ admin（Dashboard）
-├── tools/             工具实现：echo / http_get / write_file
-└── resource/          静态资源归档
-    └── admin.html        ← 原 static/admin.html
+agent-platform/
+├── src/agent_platform/
+│   ├── config/            配置层：Settings 四层解析 + agent 种子
+│   │   ├── settings.py      ← 原 config.py
+│   │   └── seed.py          ← 原 agent_seed.py
+│   ├── domain/            领域层：agent 本身，不碰 IO
+│   │   ├── messages.py       Message / ToolCall / ToolResult
+│   │   ├── events.py         LoopEvent / EventType
+│   │   ├── errors.py         HITLInterrupt / LoopBudgetExceeded …
+│   │   ├── checkpoint.py     CheckpointSnapshot 等状态模型
+│   │   ├── tool.py           Tool 抽象 + ToolRegistry
+│   │   ├── llm.py            ChatModel 端口 + MockChatModel
+│   │   └── agent_loop.py     ReAct 循环（全项目最重的一块）
+│   ├── infra/             基础设施层：所有对外 IO
+│   │   ├── checkpoint_store.py
+│   │   ├── config_store.py
+│   │   ├── secrets_store.py
+│   │   ├── approval_store.py   ← 原 approvals.py
+│   │   ├── providers.py        ← 原 core/providers.py
+│   │   └── agent_manager.py    ← 原 store/agent_manager.py
+│   ├── api/               HTTP 接口层：app / routes（/v1）/ admin（Dashboard）
+│   └── tools/             工具实现：echo / http_get / write_file
+├── resource/             归档资源（非代码，不进包）
+│   ├── static/             对外提供的静态资源
+│   │   └── admin.html        Dashboard 页面
+│   └── tests/              测试套件
+└── config/  docs/  scripts/
 ```
 
 **依赖方向单向**：
@@ -176,9 +180,17 @@ tools ───┘
 `approvals.py`），没有规则说新 store 该放哪；`core/` 里领域模型和适配器混在一起。
 现在"新加一个 store"的答案是唯一的：`infra/`。
 
-> **为什么前端在 `resource/` 而不是 `static/`**：这里只有一个 HTML 文件、由
-> 一个端点服务，不是需要挂载目录树的静态站点。`static/` 这个名字会让人以为
-> 里面还能放一堆 JS/CSS 并自动暴露。
+> `resource/` 在**仓库根**，不在包内。代价是它进不了 wheel：`DASHBOARD_PATH` 靠
+> `project_root()` 向上找 `pyproject.toml` 解析，装到 site-packages 后没有仓库根，
+> `/admin/` 会返回 503 并说明原因。对一个内部调试面板，这是划算的取舍。
+
+**路径解析一律不数 `..`**。这一轮同一个坑踩了两次：`project_root()` 用 `parents[2]`
+找仓库根，`config.py` 下沉一层后静默指向了 `src/agent_platform`；测试用
+`Path(__file__).parent.parent`，`tests/` 移进 `resource/` 后 5 个用例全挂。
+
+现在两边都改成**向上找 `pyproject.toml`**（`project_root()`），测试通过 `repo_root`
+fixture 复用它——测试和应用对"仓库根在哪"的定义由构造保证一致，以后再移文件也不会
+静默走偏。
 
 ## 5. 关键决策
 
@@ -346,7 +358,7 @@ deepseek_model: deepseek-flash
 tool_http_get_timeout: 3.0 # 内网快，超时压短
 ```
 
-> `tests/test_configurability.py` 会断言 YAML 里 pin 的值与代码默认值一致，
+> `resource/tests/test_configurability.py` 会断言 YAML 里 pin 的值与代码默认值一致，
 > 防止两边悄悄漂移。
 
 ### config/agents.yaml — agent 定义归档
@@ -532,8 +544,8 @@ agent 定义在 `config/agents.yaml` 里，这里只有一个开关：
 | `AGENT_PLATFORM_LOG_LEVEL` | `INFO` | 日志级别 |
 
 完整列表（含注释）见 `src/agent_platform/config.py`；归档正本见 `config/platform.yaml`
-和 `config/agents.yaml`。`tests/test_configurability.py` 断言每项设置真的作用于对应
-代码路径且 YAML 与代码默认值不漂移，`tests/test_agent_seed.py` 覆盖种子加载与优先级。
+和 `config/agents.yaml`。`resource/tests/test_configurability.py` 断言每项设置真的作用于对应
+代码路径且 YAML 与代码默认值不漂移，`resource/tests/test_agent_seed.py` 覆盖种子加载与优先级。
 
 ## 7. LLM 供应商配置（DeepSeek / Mock / 自定义）
 
@@ -639,11 +651,11 @@ OpenAI 兼容接口有一条硬规则：
 这条规则有四个地方会踩到，都修过，也都有回归测试：
 
 1. **序列化格式错**：`tool_calls` 少了 `type` 字段、`arguments` 没编码成 JSON 字符串
-   → `422 missing field 'type'`（`tests/test_wire_format.py`）
+   → `422 missing field 'type'`（`resource/tests/test_wire_format.py`）
 2. **HITL 恢复时空串被当成输入**：恢复请求带 `content: ""`，空串不是 `None`，于是被
    当成真实用户消息插进了 assistant 和 tool 结果之间 → `400 An assistant message
    with 'tool_calls' must be followed by tool messages`
-   （`tests/test_hitl_resume_wire.py`）
+   （`resource/tests/test_hitl_resume_wire.py`）
 3. **上下文压缩切断配对**：压缩按条数切分，可能正好切在 assistant 和它的 tool 结果
    中间；`_summarize()` 只保留 user/assistant，被摘要掉的那一半会留下孤儿 tool 消息
    → 同样 400。修法是切分后把孤儿 tool 消息一并推进 `older`

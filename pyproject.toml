@@ -73,7 +73,7 @@ build-backend = "hatchling.build"
 packages = ["src/agent_platform"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["resource/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

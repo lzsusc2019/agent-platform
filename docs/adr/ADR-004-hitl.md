@@ -117,7 +117,7 @@ OpenAI 兼容接口的硬规则：**带 `tool_calls` 的 assistant 消息，后�
 另外 `hitl_resolved` 事件曾经发两次（通用分支 + 恢复快捷路径各一次），现在只在
 恢复快捷路径里发一次，且只在确实有审批在等待时发。
 
-回归测试见 `tests/test_hitl_resume_wire.py`，核心是一个
+回归测试见 `resource/tests/test_hitl_resume_wire.py`，核心是一个
 `assert_valid_openai_order()`：不联网，直接在本地校验出站 payload 不会触发服务端
 的那条规则。真实 API 侧的确认由 `scripts/live_verify.py` 负责。
 

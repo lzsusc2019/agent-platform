@@ -127,7 +127,7 @@ agents:
 3. **失败要响。** `agents.yaml` 语法错 / 字段类型错 → 抛 `AgentSeedError`，
    拒绝启动。带着缺失的 agent 静默起来更糟。文件不存在则只是警告 + 跳过。
 
-4. **归档不能漂移。** `tests/test_configurability.py` 断言 `platform.yaml`
+4. **归档不能漂移。** `resource/tests/test_configurability.py` 断言 `platform.yaml`
    里 pin 的每个值都等于当前代码默认值 —— 改了一边没改另一边就红。
 
 5. **行为测试锁住接线。** 把字面量提成配置只做对了一半，值还得真的送达。

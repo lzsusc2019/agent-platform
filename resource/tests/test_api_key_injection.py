@@ -168,8 +168,7 @@ def test_use_fake_redis_warns() -> None:
 # ----- the shipped archive parses and carries the demo agent ---------------
 
 
-def test_shipped_platform_yaml_parses() -> None:
-    from pathlib import Path
+def test_shipped_platform_yaml_parses(repo_root) -> None:
 
     import yaml
 
@@ -177,7 +176,11 @@ def test_shipped_platform_yaml_parses() -> None:
 
     # Use the module constant, not the helper: the autouse fixture redirects
     # the helper at a temp file.
-    path = Path(__file__).resolve().parent.parent / PLATFORM_YAML
-    assert path.exists(), "config/platform.yaml must ship in the repo"
+    path = repo_root / PLATFORM_YAML
+    if not path.exists():
+        pytest.skip(
+            "config/platform.yaml is operator-local (holds credentials, not "
+            "tracked); a fresh clone legitimately has none"
+        )
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     assert isinstance(data, dict) and data, "config/platform.yaml is empty"

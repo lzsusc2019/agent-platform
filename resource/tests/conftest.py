@@ -8,6 +8,8 @@ nonexistent paths and clears the key environment variables, so a local
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
 
@@ -16,11 +18,34 @@ from agent_platform.config.settings import (
     LOCAL_YAML_ENV,
     PLATFORM_YAML_ENV,
     Settings,
+    project_root,
 )
 from agent_platform.domain.agent_loop import AgentLoop
 from agent_platform.domain.llm import MockChatModel
 from agent_platform.infra.checkpoint_store import CheckpointStore
 from agent_platform.tools import build_default_registry
+
+
+@pytest.fixture(scope="session")
+def repo_root() -> Path:
+    """The repository root, resolved exactly the way the application does.
+
+    Deliberately NOT `Path(__file__).parent.parent`. That form encodes how
+    deep the test file happens to sit, so moving the suite — which happened,
+    when it went under resource/ — silently repointed every path at the wrong
+    directory. The symptom is a missing config file, which reads as a broken
+    checkout rather than a stale assumption.
+
+    `project_root()` walks up looking for pyproject.toml, so it survives any
+    future move, and using it here means tests and production agree on where
+    the repository is by construction.
+    """
+    root = project_root()
+    assert root is not None and isinstance(root, Path), (
+        "project_root() found no pyproject.toml; tests must run from a "
+        "source checkout"
+    )
+    return root
 
 
 @pytest.fixture(autouse=True)

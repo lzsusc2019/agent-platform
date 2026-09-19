@@ -123,10 +123,7 @@ def test_bad_field_type_raises_seed_error(tmp_path) -> None:
 # ----- the shipped archive --------------------------------------------------
 
 
-def test_shipped_agents_yaml_is_valid() -> None:
-    from pathlib import Path
-
-    repo_root = Path(__file__).resolve().parent.parent
+def test_shipped_agents_yaml_is_valid(repo_root) -> None:
     path = repo_root / "config" / "agents.yaml"
     assert path.exists(), "config/agents.yaml is missing from the repo"
     seeds = load_agent_seeds(Settings(agent_seed_file=str(path)))
@@ -134,10 +131,7 @@ def test_shipped_agents_yaml_is_valid() -> None:
     assert "demo" in ids
 
 
-def test_shipped_demo_agent_uses_deepseek_flash() -> None:
-    from pathlib import Path
-
-    repo_root = Path(__file__).resolve().parent.parent
+def test_shipped_demo_agent_uses_deepseek_flash(repo_root) -> None:
     path = repo_root / "config" / "agents.yaml"
     seeds = load_agent_seeds(Settings(agent_seed_file=str(path)))
     demo = next(a for a in seeds if a.agent_id == "demo")

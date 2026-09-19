@@ -83,7 +83,7 @@ def test_missing_yaml_files_are_not_fatal(tmp_path, monkeypatch) -> None:
     assert Settings().max_turns == 100
 
 
-def test_shipped_platform_yaml_matches_the_documented_defaults() -> None:
+def test_shipped_platform_yaml_matches_the_documented_defaults(repo_root) -> None:
     """The local config archive must not silently drift.
 
     If someone changes a code default, this fails until they either update
@@ -99,11 +99,8 @@ def test_shipped_platform_yaml_matches_the_documented_defaults() -> None:
     a machine that has the file. A code default can still move without anyone
     noticing. Keep this file in your own checkout to keep the check alive.
     """
-    from pathlib import Path
-
     import yaml
 
-    repo_root = Path(__file__).resolve().parent.parent
     cfg_path = repo_root / "config" / "platform.yaml"
     if not cfg_path.exists():
         pytest.skip(
